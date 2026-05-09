@@ -1,0 +1,342 @@
+{% extends "base.html" %}
+{% block title %}Predict Livestock Health – Smart Dairy Monitor{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-header">
+  <div class="container-xl">
+    <div class="row align-items-center">
+      <div class="col">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Dashboard</a></li>
+            <li class="breadcrumb-item active">Health Prediction</li>
+          </ol>
+        </nav>
+        <h1 class="page-title mb-1"><i class="bi bi-cpu me-2"></i>Livestock Health Prediction</h1>
+        <p class="page-subtitle">Enter the animal's physiological and environmental parameters below</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="py-5">
+  <div class="container-xl">
+
+    {% if error %}
+    <div class="alert alert-danger d-flex align-items-center mb-4" role="alert">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      <div>{{ error }}</div>
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+
+      <!-- ─── Prediction Form ─── -->
+      <div class="col-lg-8">
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-icon"><i class="bi bi-clipboard2-pulse-fill"></i></div>
+            <div>
+              <h4 class="mb-0">Animal Health Parameters</h4>
+              <p class="mb-0 opacity-75 small">Fill in all fields to get accurate predictions</p>
+            </div>
+          </div>
+
+          <form method="POST" action="{{ url_for('predict') }}" id="predictionForm" novalidate>
+            <div class="form-card-body">
+
+              <!-- Row 1: Temperature & Humidity -->
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label for="temperature" class="form-label-custom">
+                    <i class="bi bi-thermometer-half param-icon-blue"></i>
+                    Body Temperature <span class="unit-badge">°C</span>
+                  </label>
+                  <div class="input-wrapper">
+                    <input type="number" class="form-control custom-input" id="temperature"
+                           name="temperature" step="0.1"
+                           placeholder="e.g. 38.5" required
+                           value="{{ request.form.get('temperature', '') }}" />
+                    <div class="input-hint">Normal range: 38.0 – 39.0°C</div>
+                    <div class="input-indicator" id="temp-indicator"></div>
+                  </div>
+                  <div class="invalid-feedback">Please enter a temperature value</div>
+                </div>
+
+                <div class="col-md-6">
+                  <label for="humidity" class="form-label-custom">
+                    <i class="bi bi-droplet-fill param-icon-cyan"></i>
+                    Relative Humidity <span class="unit-badge">%</span>
+                  </label>
+                  <div class="input-wrapper">
+                    <input type="number" class="form-control custom-input" id="humidity"
+                           name="humidity" step="1"
+                           placeholder="e.g. 65" required
+                           value="{{ request.form.get('humidity', '') }}" />
+                    <div class="input-hint">Optimal: 40 – 75%</div>
+                    <div class="input-indicator" id="hum-indicator"></div>
+                  </div>
+                  <div class="invalid-feedback">Please enter a humidity value</div>
+                </div>
+              </div>
+
+              <!-- Row 2: Milk Yield & Weight -->
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label for="milk_yield" class="form-label-custom">
+                    <i class="bi bi-cup-hot-fill param-icon-green"></i>
+                    Milk Yield <span class="unit-badge">L/day</span>
+                  </label>
+                  <div class="input-wrapper">
+                    <input type="number" class="form-control custom-input" id="milk_yield"
+                           name="milk_yield" step="0.1"
+                           placeholder="e.g. 22" required
+                           value="{{ request.form.get('milk_yield', '') }}" />
+                    <div class="input-hint">Target: ≥ 15 L/day</div>
+                    <div class="input-indicator" id="milk-indicator"></div>
+                  </div>
+                  <div class="invalid-feedback">Please enter a milk yield value</div>
+                </div>
+
+                <div class="col-md-6">
+                  <label for="weight" class="form-label-custom">
+                    <i class="bi bi-bar-chart-fill param-icon-orange"></i>
+                    Body Weight <span class="unit-badge">kg</span>
+                  </label>
+                  <div class="input-wrapper">
+                    <input type="number" class="form-control custom-input" id="weight"
+                           name="weight" step="1"
+                           placeholder="e.g. 480" required
+                           value="{{ request.form.get('weight', '') }}" />
+                    <div class="input-hint">Healthy range: 420 – 600 kg</div>
+                    <div class="input-indicator" id="weight-indicator"></div>
+                  </div>
+                  <div class="invalid-feedback">Please enter a weight value</div>
+                </div>
+              </div>
+
+              <!-- Row 3: Heart Rate & Activity -->
+              <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                  <label for="heart_rate" class="form-label-custom">
+                    <i class="bi bi-heart-pulse-fill param-icon-red"></i>
+                    Heart Rate <span class="unit-badge">bpm</span>
+                  </label>
+                  <div class="input-wrapper">
+                    <input type="number" class="form-control custom-input" id="heart_rate"
+                           name="heart_rate" step="1"
+                           placeholder="e.g. 68" required
+                           value="{{ request.form.get('heart_rate', '') }}" />
+                    <div class="input-hint">Normal: 55 – 80 bpm</div>
+                    <div class="input-indicator" id="hr-indicator"></div>
+                  </div>
+                  <div class="invalid-feedback">Please enter a heart rate value</div>
+                </div>
+
+                <div class="col-md-6">
+                  <label for="activity_level" class="form-label-custom">
+                    <i class="bi bi-person-walking param-icon-purple"></i>
+                    Activity Level <span class="unit-badge">%</span>
+                  </label>
+                  <div class="input-wrapper">
+                    <input type="number" class="form-control custom-input" id="activity_level"
+                           name="activity_level" step="1"
+                           placeholder="e.g. 75" required
+                           value="{{ request.form.get('activity_level', '') }}" />
+                    <div class="input-hint">Active animals: ≥ 50%</div>
+                    <div class="input-indicator" id="act-indicator"></div>
+                  </div>
+                  <div class="invalid-feedback">Please enter an activity level value</div>
+                </div>
+              </div>
+
+              <!-- Buttons -->
+              <div class="d-flex flex-wrap gap-3 align-items-center">
+                <button type="submit" class="btn btn-predict-main" id="submitBtn">
+                  <span class="btn-default-text">
+                    <i class="bi bi-lightning-fill me-2"></i>Predict Health Status
+                  </span>
+                  <span class="btn-loading-text d-none">
+                    <span class="spinner-border spinner-border-sm me-2"></span>Analyzing…
+                  </span>
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="fillSampleBtn">
+                  <i class="bi bi-magic me-2"></i>Use Sample (Healthy)
+                </button>
+                <button type="button" class="btn btn-outline-danger" id="fillSickBtn">
+                  <i class="bi bi-exclamation-circle me-2"></i>Use Sample (Sick)
+                </button>
+                <button type="reset" class="btn btn-outline-secondary ms-auto" id="resetBtn">
+                  <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+                </button>
+              </div>
+
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ─── Sidebar Info ─── -->
+      <div class="col-lg-4">
+
+        <!-- Parameter Guide -->
+        <div class="sidebar-card mb-4">
+          <h6 class="sidebar-card-title">
+            <i class="bi bi-info-circle-fill me-2 text-accent"></i>Parameter Reference
+          </h6>
+          <div class="param-guide-list">
+            <div class="param-guide-item">
+              <i class="bi bi-thermometer-half text-primary"></i>
+              <div>
+                <div class="param-guide-name">Body Temperature</div>
+                <div class="param-guide-range">
+                  <span class="range-ok">38.0–39.0°C Normal</span>
+                  <span class="range-warn">&gt;39.2°C High</span>
+                </div>
+              </div>
+            </div>
+            <div class="param-guide-item">
+              <i class="bi bi-droplet-fill text-info"></i>
+              <div>
+                <div class="param-guide-name">Humidity</div>
+                <div class="param-guide-range">
+                  <span class="range-ok">40–75% Optimal</span>
+                  <span class="range-warn">&gt;75% High</span>
+                </div>
+              </div>
+            </div>
+            <div class="param-guide-item">
+              <i class="bi bi-cup-hot-fill text-success"></i>
+              <div>
+                <div class="param-guide-name">Milk Yield</div>
+                <div class="param-guide-range">
+                  <span class="range-ok">≥15 L/day Good</span>
+                  <span class="range-warn">&lt;15 L/day Low</span>
+                </div>
+              </div>
+            </div>
+            <div class="param-guide-item">
+              <i class="bi bi-bar-chart-fill text-warning"></i>
+              <div>
+                <div class="param-guide-name">Body Weight</div>
+                <div class="param-guide-range">
+                  <span class="range-ok">≥420 kg Healthy</span>
+                  <span class="range-warn">&lt;420 kg Low</span>
+                </div>
+              </div>
+            </div>
+            <div class="param-guide-item">
+              <i class="bi bi-heart-pulse-fill text-danger"></i>
+              <div>
+                <div class="param-guide-name">Heart Rate</div>
+                <div class="param-guide-range">
+                  <span class="range-ok">55–80 bpm Normal</span>
+                  <span class="range-warn">&gt;80 bpm High</span>
+                </div>
+              </div>
+            </div>
+            <div class="param-guide-item">
+              <i class="bi bi-person-walking" style="color:#8b5cf6"></i>
+              <div>
+                <div class="param-guide-name">Activity Level</div>
+                <div class="param-guide-range">
+                  <span class="range-ok">≥50% Active</span>
+                  <span class="range-warn">&lt;50% Low</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Model Info -->
+        <div class="sidebar-card">
+          <h6 class="sidebar-card-title">
+            <i class="bi bi-robot me-2 text-accent"></i>Active ML Model
+          </h6>
+          <div class="model-info-item">
+            <span>Algorithm</span>
+            <strong class="text-accent">Random Forest</strong>
+          </div>
+          <div class="model-info-item">
+            <span>Features</span>
+            <strong>6 Parameters</strong>
+          </div>
+          <div class="model-info-item">
+            <span>Training Samples</span>
+            <strong>1600 records</strong>
+          </div>
+          <div class="model-info-item">
+            <span>Output Classes</span>
+            <strong>Healthy / Sick</strong>
+          </div>
+          <div class="model-info-item border-0">
+            <span>Prediction Speed</span>
+            <strong class="text-success">&lt;50ms</strong>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── Sample Data ────────────────────────────────
+const SAMPLE_HEALTHY = {
+  temperature: 38.5, humidity: 62, milk_yield: 22,
+  weight: 480, heart_rate: 67, activity_level: 78
+};
+const SAMPLE_SICK = {
+  temperature: 40.1, humidity: 82, milk_yield: 7,
+  weight: 400, heart_rate: 92, activity_level: 30
+};
+
+function fillForm(data) {
+  Object.keys(data).forEach(k => {
+    const el = document.getElementById(k);
+    if (el) { el.value = data[k]; el.dispatchEvent(new Event('input')); }
+  });
+}
+
+document.getElementById('fillSampleBtn').addEventListener('click', () => fillForm(SAMPLE_HEALTHY));
+document.getElementById('fillSickBtn').addEventListener('click', () => fillForm(SAMPLE_SICK));
+
+// ── Loading State ──────────────────────────────
+document.getElementById('predictionForm').addEventListener('submit', function(e) {
+  if (!this.checkValidity()) { e.preventDefault(); this.classList.add('was-validated'); return; }
+  const btn = document.getElementById('submitBtn');
+  btn.querySelector('.btn-default-text').classList.add('d-none');
+  btn.querySelector('.btn-loading-text').classList.remove('d-none');
+  btn.disabled = true;
+});
+
+// ── Live Input Indicators ─────────────────────
+const rules = {
+  temperature:   { min: 38.0, max: 39.2, id: 'temp-indicator' },
+  humidity:      { min: 40,   max: 75,   id: 'hum-indicator' },
+  milk_yield:    { min: 15,   max: 999,  id: 'milk-indicator' },
+  weight:        { min: 420,  max: 999,  id: 'weight-indicator' },
+  heart_rate:    { min: 55,   max: 80,   id: 'hr-indicator' },
+  activity_level:{ min: 50,   max: 999,  id: 'act-indicator' },
+};
+
+Object.keys(rules).forEach(key => {
+  const input = document.getElementById(key);
+  const indEl = document.getElementById(rules[key].id);
+  if (!input || !indEl) return;
+  input.addEventListener('input', () => {
+    const v = parseFloat(input.value);
+    if (isNaN(v)) { indEl.className = 'input-indicator'; return; }
+    if (v >= rules[key].min && v <= rules[key].max)
+      indEl.className = 'input-indicator ind-ok';
+    else
+      indEl.className = 'input-indicator ind-warn';
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+{% block title %}Dashboard – Smart Dairy Livestock Monitoring System{% endblock %}
+
+{% block content %}
+
+<!-- ═══════════════════════════════════════════
+     HERO SECTION
+════════════════════════════════════════════ -->
+<section class="hero-section">
+  <div class="hero-particles" id="particles"></div>
+  <div class="container-xl position-relative z-1">
+    <div class="row align-items-center min-vh-80 py-5">
+      <div class="col-lg-6">
+        <div class="hero-badge mb-3 animate-fadein-up" style="animation-delay:0.1s">
+          <i class="bi bi-stars me-2"></i>AI-Powered Monitoring
+        </div>
+        <h1 class="hero-title animate-fadein-up" style="animation-delay:0.2s">
+          Smart Dairy<br/>
+          <span class="text-gradient">Livestock Health</span><br/>
+          Monitoring System
+        </h1>
+        <p class="hero-desc animate-fadein-up" style="animation-delay:0.3s">
+          Leverage the power of Machine Learning to predict dairy animal health,
+          detect early signs of illness, and receive intelligent care recommendations —
+          all in real time.
+        </p>
+        <div class="d-flex flex-wrap gap-3 animate-fadein-up" style="animation-delay:0.4s">
+          <a href="{{ url_for('predict') }}" class="btn btn-hero-primary">
+            <i class="bi bi-lightning-fill me-2"></i>Start Prediction
+          </a>
+          <a href="#model-section" class="btn btn-hero-outline">
+            <i class="bi bi-bar-chart-line me-2"></i>View Model Stats
+          </a>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="hero-stats mt-5 animate-fadein-up" style="animation-delay:0.5s">
+          <div class="stat-item">
+            <span class="stat-number" data-target="{{ stats.accuracy }}">0</span><span class="stat-unit">%</span>
+            <span class="stat-label">Model Accuracy</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-number" data-target="2000">0</span><span class="stat-unit">+</span>
+            <span class="stat-label">Training Samples</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-number" data-target="3">0</span><span class="stat-unit"></span>
+            <span class="stat-label">ML Algorithms</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-number" data-target="6">0</span><span class="stat-unit"></span>
+            <span class="stat-label">Health Indicators</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6 mt-5 mt-lg-0 animate-fadein-up" style="animation-delay:0.3s">
+        <div class="hero-visual">
+          <div class="hero-card-float card-float-1">
+            <i class="bi bi-heart-pulse-fill text-danger"></i>
+            <span>Heart Rate <strong>68 bpm</strong></span>
+          </div>
+          <div class="hero-card-float card-float-2">
+            <i class="bi bi-thermometer-half text-warning"></i>
+            <span>Temperature <strong>38.5°C</strong></span>
+          </div>
+          <div class="hero-card-float card-float-3">
+            <i class="bi bi-check-circle-fill text-success"></i>
+            <span>Status: <strong>Healthy</strong></span>
+          </div>
+          <div class="hero-illustration">
+            <div class="illustration-ring ring-1"></div>
+            <div class="illustration-ring ring-2"></div>
+            <div class="illustration-ring ring-3"></div>
+            <div class="illustration-center">
+              <i class="bi bi-cpu-fill"></i>
+              <span>AI Engine</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     FEATURES SECTION
+════════════════════════════════════════════ -->
+<section class="features-section py-5">
+  <div class="container-xl">
+    <div class="section-header text-center mb-5">
+      <span class="section-badge">System Capabilities</span>
+      <h2 class="section-title">Two Powerful Modules</h2>
+      <p class="section-sub">Complete AI-driven livestock management at your fingertips</p>
+    </div>
+
+    <div class="row g-4">
+      <!-- Module 1 -->
+      <div class="col-md-6">
+        <div class="feature-card h-100" id="module-health">
+          <div class="feature-icon-wrap">
+            <div class="feature-icon bg-gradient-blue">
+              <i class="bi bi-cpu-fill"></i>
+            </div>
+          </div>
+          <h3 class="feature-title">Module 1: Health Prediction</h3>
+          <p class="feature-desc">
+            Advanced ML classification engine powered by <strong>Random Forest</strong>
+            to predict if a livestock animal is <em>Healthy</em> or <em>Sick/At Risk</em>
+            based on 6 physiological and environmental parameters.
+          </p>
+          <ul class="feature-list">
+            <li><i class="bi bi-check2-circle"></i> Multi-algorithm comparison (DT, RF, LR)</li>
+            <li><i class="bi bi-check2-circle"></i> Confidence percentage output</li>
+            <li><i class="bi bi-check2-circle"></i> Real-time prediction in milliseconds</li>
+            <li><i class="bi bi-check2-circle"></i> Body temp, milk yield, weight, heart rate</li>
+          </ul>
+          <a href="{{ url_for('predict') }}" class="btn btn-module mt-3">
+            <i class="bi bi-play-circle me-2"></i>Try Prediction
+          </a>
+        </div>
+      </div>
+
+      <!-- Module 2 -->
+      <div class="col-md-6">
+        <div class="feature-card h-100" id="module-recommend">
+          <div class="feature-icon-wrap">
+            <div class="feature-icon bg-gradient-green">
+              <i class="bi bi-lightbulb-fill"></i>
+            </div>
+          </div>
+          <h3 class="feature-title">Module 2: Smart Recommendations</h3>
+          <p class="feature-desc">
+            Intelligent rule-based recommendation engine that dynamically generates
+            actionable veterinary and farm management advice based on ML results
+            and environmental conditions.
+          </p>
+          <ul class="feature-list">
+            <li><i class="bi bi-check2-circle"></i> Dynamic veterinary recommendations</li>
+            <li><i class="bi bi-check2-circle"></i> Temperature & humidity alerts</li>
+            <li><i class="bi bi-check2-circle"></i> Nutrition & feed guidance</li>
+            <li><i class="bi bi-check2-circle"></i> Isolation & biosecurity advice</li>
+          </ul>
+          <a href="{{ url_for('predict') }}" class="btn btn-module mt-3">
+            <i class="bi bi-arrow-right-circle me-2"></i>Get Recommendations
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input Parameters Cards -->
+    <div class="row g-3 mt-4">
+      {% set params = [
+        ('bi-thermometer-half','Body Temperature','Normal: 38.0–39.0°C','param-blue'),
+        ('bi-droplet-fill','Humidity','Optimal: 40–75%','param-cyan'),
+        ('bi-cup-hot-fill','Milk Yield','Target: ≥15 L/day','param-green'),
+        ('bi-bar-chart-fill','Body Weight','Healthy: ≥420 kg','param-orange'),
+        ('bi-heart-pulse-fill','Heart Rate','Normal: 55–80 bpm','param-red'),
+        ('bi-person-walking','Activity Level','Active: ≥50%','param-purple'),
+      ] %}
+      {% for icon, name, range, cls in params %}
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="param-card {{ cls }}">
+          <i class="bi {{ icon }} param-icon"></i>
+          <div class="param-name">{{ name }}</div>
+          <div class="param-range">{{ range }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     MODEL PERFORMANCE SECTION
+════════════════════════════════════════════ -->
+<section class="model-section py-5" id="model-section">
+  <div class="container-xl">
+    <div class="section-header text-center mb-5">
+      <span class="section-badge">Machine Learning</span>
+      <h2 class="section-title">Model Performance</h2>
+      <p class="section-sub">Evaluated on hold-out test set with 5-fold cross-validation</p>
+    </div>
+
+    <!-- Best Model Banner -->
+    <div class="best-model-banner mb-5">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <div class="trophy-icon"><i class="bi bi-trophy-fill"></i></div>
+            <div>
+              <h4 class="mb-0 text-white">Best Model: {{ stats.model_name }}</h4>
+              <p class="mb-0 opacity-75">Selected based on highest test accuracy</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+          <div class="best-model-accuracy">{{ stats.accuracy }}%</div>
+          <div class="opacity-75 small">Test Accuracy</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Metric Cards -->
+    <div class="row g-4 mb-5">
+      {% set metrics = [
+        ('Accuracy', stats.accuracy, 'bi-bullseye', 'metric-blue', 'Correctly classified samples'),
+        ('Precision', stats.precision, 'bi-crosshair', 'metric-green', 'Positive predictive value'),
+        ('Recall', stats.recall, 'bi-search', 'metric-orange', 'Sensitivity / True positive rate'),
+        ('F1 Score', stats.f1, 'bi-award-fill', 'metric-purple', 'Harmonic mean of precision & recall'),
+        ('CV Accuracy', stats.cv_accuracy, 'bi-arrow-repeat', 'metric-cyan', '5-fold cross-validation score'),
+      ] %}
+      {% for label, val, icon, cls, desc in metrics %}
+      <div class="col-6 col-md-4 col-lg">
+        <div class="metric-card {{ cls }}">
+          <i class="bi {{ icon }} metric-icon"></i>
+          <div class="metric-value" data-target="{{ val }}">0</div>
+          <div class="metric-unit">%</div>
+          <div class="metric-label">{{ label }}</div>
+          <div class="metric-desc">{{ desc }}</div>
+          <div class="metric-bar">
+            <div class="metric-fill" style="width:0%" data-width="{{ val }}"></div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Model Comparison Table -->
+    <div class="row g-4">
+      <div class="col-lg-7">
+        <div class="chart-card">
+          <h5 class="chart-title"><i class="bi bi-bar-chart me-2"></i>Algorithm Comparison</h5>
+          <div class="table-responsive">
+            <table class="table compare-table mb-0">
+              <thead>
+                <tr>
+                  <th>Algorithm</th>
+                  <th>Accuracy</th>
+                  <th>Precision</th>
+                  <th>Recall</th>
+                  <th>F1</th>
+                  <th>Best</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for name, m in stats.all_results.items() %}
+                <tr class="{% if name == stats.model_name %}best-row{% endif %}">
+                  <td class="fw-500">{{ name }}</td>
+                  <td>{{ m.accuracy }}%</td>
+                  <td>{{ m.precision }}%</td>
+                  <td>{{ m.recall }}%</td>
+                  <td>{{ m.f1 }}%</td>
+                  <td>
+                    {% if name == stats.model_name %}
+                    <span class="badge bg-success"><i class="bi bi-check2"></i> Best</span>
+                    {% else %}
+                    <span class="badge bg-secondary">—</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-5">
+        <div class="chart-card h-100 d-flex flex-column">
+          <h5 class="chart-title"><i class="bi bi-grid me-2"></i>Confusion Matrix</h5>
+          <div class="flex-grow-1 d-flex align-items-center justify-content-center">
+            <img src="{{ url_for('static', filename='images/confusion_matrix.png') }}"
+                 alt="Confusion Matrix" class="img-fluid rounded chart-img" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature Importance -->
+    <div class="row g-4 mt-1">
+      <div class="col-12">
+        <div class="chart-card">
+          <h5 class="chart-title"><i class="bi bi-diagram-3 me-2"></i>Feature Importance (Random Forest)</h5>
+          <img src="{{ url_for('static', filename='images/feature_importance.png') }}"
+               alt="Feature Importance" class="img-fluid rounded chart-img" style="max-height:280px;object-fit:contain;width:100%" />
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     CTA SECTION
+════════════════════════════════════════════ -->
+<section class="cta-section py-5">
+  <div class="container-xl">
+    <div class="cta-card text-center py-5 px-4">
+      <div class="cta-icon mb-3"><i class="bi bi-lightning-charge-fill"></i></div>
+      <h2 class="cta-title mb-3">Ready to Assess Your Livestock?</h2>
+      <p class="cta-sub mb-4">
+        Enter your animal's health parameters and get an instant AI-powered health prediction<br/>
+        along with personalized care recommendations.
+      </p>
+      <a href="{{ url_for('predict') }}" class="btn btn-cta-main me-3">
+        <i class="bi bi-cpu me-2"></i>Start Health Prediction
+      </a>
+      <a href="{{ url_for('about') }}" class="btn btn-cta-outline">
+        <i class="bi bi-info-circle me-2"></i>Learn More
+      </a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

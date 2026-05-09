@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}About – Smart Dairy Livestock Monitoring System{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div class="container-xl">
+    <h1 class="page-title mb-1"><i class="bi bi-info-circle me-2"></i>About This System</h1>
+    <p class="page-subtitle">Project overview, technology stack, and system architecture</p>
+  </div>
+</div>
+
+<section class="py-5">
+  <div class="container-xl">
+
+    <!-- Project Overview -->
+    <div class="row g-4 mb-5">
+      <div class="col-lg-8">
+        <div class="result-card">
+          <h4 class="result-card-title"><i class="bi bi-file-earmark-text me-2"></i>Project Overview</h4>
+          <p>
+            The <strong>Smart Dairy Livestock Monitoring and Decision Support System</strong> is an
+            AI-powered web application designed to assist dairy farm managers and veterinarians
+            in monitoring the health of dairy animals in real time.
+          </p>
+          <p>
+            By leveraging machine learning algorithms trained on physiological and environmental data,
+            the system can predict whether a dairy animal is healthy or at risk, and provide actionable
+            smart recommendations to improve animal welfare and farm productivity.
+          </p>
+          <p class="mb-0">
+            This system was developed as a <strong>Major Computer Science Project</strong>, demonstrating
+            the application of Artificial Intelligence in the agricultural domain (AgriTech / Precision Farming).
+          </p>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="result-card h-100">
+          <h6 class="result-card-title"><i class="bi bi-layers me-2"></i>Technology Stack</h6>
+          {% set tech = [
+            ('bi-server','Backend','Python 3.x + Flask'),
+            ('bi-cpu','ML Engine','Scikit-learn'),
+            ('bi-bar-chart','Data','Pandas + NumPy'),
+            ('bi-brush','Frontend','HTML5 + Bootstrap 5'),
+            ('bi-file-earmark-code','Storage','Joblib / Pickle'),
+            ('bi-graph-up','Plots','Matplotlib + Seaborn'),
+          ] %}
+          {% for icon, label, value in tech %}
+          <div class="model-info-item {% if loop.last %}border-0{% endif %}">
+            <span><i class="bi {{ icon }} me-2 text-accent"></i>{{ label }}</span>
+            <strong>{{ value }}</strong>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Modules -->
+    <div class="row g-4 mb-5">
+      <div class="col-12">
+        <div class="section-header mb-4">
+          <h4 class="section-title">System Modules</h4>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="feature-card">
+          <div class="feature-icon bg-gradient-blue mb-3">
+            <i class="bi bi-cpu-fill"></i>
+          </div>
+          <h5>Module 1: Health Prediction</h5>
+          <p>Uses a trained Random Forest classifier to predict livestock health status.</p>
+          <ul class="feature-list">
+            <li><i class="bi bi-check2-circle"></i> 3 algorithms compared: DT, RF, LR</li>
+            <li><i class="bi bi-check2-circle"></i> Best model auto-selected by accuracy</li>
+            <li><i class="bi bi-check2-circle"></i> Outputs: Healthy / Sick + Confidence %</li>
+            <li><i class="bi bi-check2-circle"></i> 6 physiological input features</li>
+            <li><i class="bi bi-check2-circle"></i> Target accuracy ≥ 85%</li>
+          </ul>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="feature-card">
+          <div class="feature-icon bg-gradient-green mb-3">
+            <i class="bi bi-lightbulb-fill"></i>
+          </div>
+          <h5>Module 2: Smart Recommendations</h5>
+          <p>Rule-based decision support engine generating veterinary and management advice.</p>
+          <ul class="feature-list">
+            <li><i class="bi bi-check2-circle"></i> Temperature threshold alerts</li>
+            <li><i class="bi bi-check2-circle"></i> Humidity & ventilation guidance</li>
+            <li><i class="bi bi-check2-circle"></i> Nutrition & feed recommendations</li>
+            <li><i class="bi bi-check2-circle"></i> Isolation protocols for sick animals</li>
+            <li><i class="bi bi-check2-circle"></i> Dynamic, context-aware output</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dataset & Model -->
+    <div class="row g-4 mb-5">
+      <div class="col-md-6">
+        <div class="result-card">
+          <h5 class="result-card-title"><i class="bi bi-table me-2"></i>Dataset Details</h5>
+          {% set ds = [
+            ('Total Records','2,000 samples'),
+            ('Healthy Animals','1,200 records (60%)'),
+            ('Sick/At-Risk','800 records (40%)'),
+            ('Features Used','6 parameters'),
+            ('Train / Test Split','80% / 20%'),
+            ('Cross-Validation','5-fold stratified'),
+            ('Missing Values','None (cleaned)'),
+          ] %}
+          {% for label, val in ds %}
+          <div class="model-info-item {% if loop.last %}border-0{% endif %}">
+            <span>{{ label }}</span><strong>{{ val }}</strong>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="result-card">
+          <h5 class="result-card-title"><i class="bi bi-diagram-3 me-2"></i>ML Pipeline</h5>
+          <div class="pipeline-steps">
+            {% set steps = [
+              ('1','Data Generation','Realistic synthetic livestock dataset'),
+              ('2','Preprocessing','StandardScaler normalization inside pipeline'),
+              ('3','Training','3 classifiers trained and evaluated'),
+              ('4','Evaluation','Accuracy, Precision, Recall, F1, CV score'),
+              ('5','Selection','Best model selected automatically'),
+              ('6','Persistence','Saved with Joblib for fast loading'),
+              ('7','Prediction','Real-time inference on user input'),
+            ] %}
+            {% for num, title, desc in steps %}
+            <div class="pipeline-step">
+              <div class="step-num">{{ num }}</div>
+              <div>
+                <div class="step-title">{{ title }}</div>
+                <div class="step-desc">{{ desc }}</div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+{% endblock %}
