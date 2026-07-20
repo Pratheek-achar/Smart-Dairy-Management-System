@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+{% block title %}{{ animal.name }} – Animal Profile – Smart Dairy{% endblock %}
+
+{% block content %}
+<div class="page-header" style="background:linear-gradient(135deg,#0a1a0f,#0d2d1a)">
+  <div class="container-xl">
+    <nav aria-label="breadcrumb"><ol class="breadcrumb mb-2">
+      <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('animals_list') }}">Animals</a></li>
+      <li class="breadcrumb-item active">{{ animal.name }}</li>
+    </ol></nav>
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <div class="profile-avatar-lg">
+          <i class="bi bi-shield-fill-check"></i>
+        </div>
+        <div>
+          <div class="text-accent fw-600 small mb-1">{{ animal.uid }}</div>
+          <h1 class="page-title mb-1">{{ animal.name }}</h1>
+          <div class="d-flex gap-2 flex-wrap">
+            <span class="prof-tag">{{ animal.breed }}</span>
+            <span class="prof-tag">{{ animal.gender }}</span>
+            <span class="prof-tag status-badge-{{ animal.status|lower }}">{{ animal.status }}</span>
+            {% if animal.tag_number %}
+            <span class="prof-tag">🏷 {{ animal.tag_number }}</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('animal_edit', uid=animal.uid) }}" class="btn btn-sm btn-outline-light">
+          <i class="bi bi-pencil me-1"></i>Edit
+        </a>
+        <a href="{{ url_for('predict') }}?animal_uid={{ animal.uid }}" class="btn btn-sm btn-success">
+          <i class="bi bi-lightning-fill me-1"></i>Run Health Check
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="py-4" style="background:#060e1c;min-height:85vh">
+  <div class="container-xl">
+
+    <!-- ── Basic Info Row ───────────────────────────────── -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="trk-stat-card trk-blue">
+          <i class="bi bi-activity"></i>
+          <div class="trk-stat-val">{{ stats.health_count }}</div>
+          <div class="trk-stat-label">Health Checks</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="trk-stat-card trk-green">
+          <i class="bi bi-heart-pulse"></i>
+          <div class="trk-stat-val">{{ stats.healthy_count }}</div>
+          <div class="trk-stat-label">Healthy Results</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="trk-stat-card trk-red">
+          <i class="bi bi-virus"></i>
+          <div class="trk-stat-val">{{ stats.sick_count }}</div>
+          <div class="trk-stat-label">Sick Results</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="trk-stat-card trk-yellow">
+          <i class="bi bi-camera-video"></i>
+          <div class="trk-stat-val">{{ stats.behaviour_count }}</div>
+          <div class="trk-stat-label">Behaviour Logs</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <!-- ── Left column ─────────────────────────────── -->
+      <div class="col-lg-4">
+
+        <!-- Animal details card -->
+        <div class="trk-card mb-3">
+          <div class="trk-card-header mb-3">
+            <span><i class="bi bi-card-text me-2 text-accent"></i>Animal Information</span>
+          </div>
+          <table class="table trk-table mb-0">
+            <tbody>
+              <tr><td class="text-muted">Unique ID</td><td class="fw-600 text-accent">{{ animal.uid }}</td></tr>
+              <tr><td class="text-muted">Name</td><td class="text-white">{{ animal.name }}</td></tr>
+              <tr><td class="text-muted">Breed</td><td class="text-white">{{ animal.breed }}</td></tr>
+              <tr><td class="text-muted">Age</td><td class="text-white">{{ animal.age_years }} years</td></tr>
+              <tr><td class="text-muted">Gender</td><td class="text-white">{{ animal.gender }}</td></tr>
+              <tr><td class="text-muted">Weight</td><td class="text-white">{{ animal.weight_kg }} kg</td></tr>
+              <tr><td class="text-muted">Color</td><td class="text-white">{{ animal.color or '—' }}</td></tr>
+              <tr><td class="text-muted">Ear Tag</td><td class="text-white">{{ animal.tag_number or '—' }}</td></tr>
+              <tr><td class="text-muted">Status</td>
+                <td><span class="beh-badge status-badge-{{ animal.status|lower }}">{{ animal.status }}</span></td>
+              </tr>
+              <tr><td class="text-muted">Registered</td><td class="text-white" style="font-size:.8rem">{{ animal.created_at[:10] }}</td></tr>
+            </tbody>
+          </table>
+          {% if animal.notes %}
+          <div class="mt-3 p-3" style="background:rgba(255,255,255,.04);border-radius:8px;font-size:.83rem;color:#94a3b8">
+            <i class="bi bi-sticky me-1"></i>{{ animal.notes }}
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Behaviour distribution -->
+        {% if stats.behaviour_dist %}
+        <div class="trk-card">
+          <div class="trk-card-header mb-3">
+            <span><i class="bi bi-pie-chart me-2 text-accent"></i>Behaviour Summary</span>
+          </div>
+          <div style="height:180px"><canvas id="behDistChart"></canvas></div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- ── Right column ────────────────────────────── -->
+      <div class="col-lg-8">
+
+        <!-- Weight trend chart -->
+        {% if stats.weight_trend %}
+        <div class="trk-card mb-4">
+          <div class="trk-card-header mb-3">
+            <span><i class="bi bi-graph-up me-2 text-accent"></i>Weight Trend</span>
+            <span class="text-muted small">last {{ stats.weight_trend|length }} records</span>
+          </div>
+          <div style="height:160px"><canvas id="weightChart"></canvas></div>
+        </div>
+        {% endif %}
+
+        <!-- Health records history -->
+        <div class="trk-card mb-4">
+          <div class="trk-card-header mb-3">
+            <span><i class="bi bi-clipboard2-pulse me-2 text-accent"></i>Health Check History</span>
+            <span class="text-muted small">{{ health_records|length }} records</span>
+          </div>
+          {% if health_records %}
+          <div class="table-responsive">
+            <table class="table trk-table mb-0">
+              <thead><tr>
+                <th>Date</th><th>Temp</th><th>Milk</th><th>Weight</th>
+                <th>Heart Rate</th><th>Result</th><th>Confidence</th>
+              </tr></thead>
+              <tbody>
+              {% for r in health_records %}
+              <tr>
+                <td class="text-muted" style="font-size:.78rem">{{ r.recorded_at[:16] }}</td>
+                <td class="text-white">{{ r.temperature }}°C</td>
+                <td class="text-white">{{ r.milk_yield }} L</td>
+                <td class="text-white">{{ r.weight_kg }} kg</td>
+                <td class="text-white">{{ r.heart_rate }} bpm</td>
+                <td>
+                  {% if r.prediction == 'Healthy' %}
+                  <span class="beh-badge" style="background:#16a34a20;color:#4ade80;border:1px solid #16a34a40">✓ Healthy</span>
+                  {% else %}
+                  <span class="beh-badge" style="background:#dc262620;color:#f87171;border:1px solid #dc262640">✗ Sick</span>
+                  {% endif %}
+                </td>
+                <td class="text-white">{{ r.confidence }}%</td>
+              </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center text-muted py-3">
+            <i class="bi bi-clipboard2-x d-block mb-2" style="font-size:2rem"></i>
+            No health records yet.
+            <a href="{{ url_for('predict') }}?animal_uid={{ animal.uid }}" class="d-block mt-2 text-accent">Run first health check →</a>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Behaviour log -->
+        <div class="trk-card">
+          <div class="trk-card-header mb-3">
+            <span><i class="bi bi-camera-video me-2 text-accent"></i>Behaviour Log</span>
+            <span class="text-muted small">{{ behaviour_logs|length }} events</span>
+          </div>
+          {% if behaviour_logs %}
+          <div class="table-responsive">
+            <table class="table trk-table mb-0">
+              <thead><tr><th>Date</th><th>Behaviour</th><th>Duration</th><th>Velocity</th><th>Alert</th></tr></thead>
+              <tbody>
+              {% for b in behaviour_logs %}
+              {% set bcol = {'Resting':'#64a6ff','Feeding':'#22c55e','Walking':'#eab308','Stress':'#f97316','Aggressive':'#ef4444','Isolated':'#a855f7'}[b.behaviour] if b.behaviour in ['Resting','Feeding','Walking','Stress','Aggressive','Isolated'] else '#6b7280' %}
+              <tr>
+                <td class="text-muted" style="font-size:.78rem">{{ b.logged_at[:16] }}</td>
+                <td><span class="beh-badge" style="background:{{ bcol }}20;color:{{ bcol }};border:1px solid {{ bcol }}50">{{ b.behaviour }}</span></td>
+                <td class="text-white">{{ b.duration_sec|int }}s</td>
+                <td class="text-muted">{{ '%.1f'|format(b.velocity) }} px/f</td>
+                <td class="text-muted" style="font-size:.76rem">{{ b.alert_msg or '—' }}</td>
+              </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center text-muted py-3">
+            <i class="bi bi-camera-video-off d-block mb-2" style="font-size:2rem"></i>
+            No behaviour events recorded yet.
+          </div>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Weight trend chart
+{% if stats.weight_trend %}
+new Chart(document.getElementById('weightChart').getContext('2d'), {
+  type: 'line',
+  data: {
+    labels: {{ stats.weight_trend | map(attribute='recorded_at') | map('truncate', 10, true, '') | list | tojson }},
+    datasets: [{
+      label: 'Weight (kg)',
+      data: {{ stats.weight_trend | map(attribute='weight_kg') | list | tojson }},
+      borderColor: '#22d3ee', backgroundColor: 'rgba(34,211,238,.08)',
+      fill: true, tension: 0.4, pointRadius: 4, borderWidth: 2,
+      pointBackgroundColor: '#22d3ee'
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: '#475569', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,.04)' } },
+      y: { ticks: { color: '#475569' }, grid: { color: 'rgba(255,255,255,.04)' } }
+    }
+  }
+});
+{% endif %}
+
+// Behaviour distribution chart
+{% if stats.behaviour_dist %}
+const BCOLS = { Resting:'#64a6ff', Feeding:'#22c55e', Walking:'#eab308',
+                Stress:'#f97316', Aggressive:'#ef4444', Isolated:'#a855f7' };
+const behData = {{ stats.behaviour_dist | tojson }};
+new Chart(document.getElementById('behDistChart').getContext('2d'), {
+  type: 'doughnut',
+  data: {
+    labels: behData.map(d => d.behaviour),
+    datasets: [{ data: behData.map(d => d.cnt),
+      backgroundColor: behData.map(d => BCOLS[d.behaviour] || '#6b7280'), borderWidth: 0 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false, cutout: '60%',
+    plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', boxWidth: 10, font: { size: 10 } } } }
+  }
+});
+{% endif %}
+</script>
+{% endblock %}

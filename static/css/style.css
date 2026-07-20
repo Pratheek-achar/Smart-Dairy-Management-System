@@ -162,11 +162,22 @@ body{font-family:'Inter',sans-serif;background:var(--bg-dark);color:var(--text-m
 .form-card-header{background:linear-gradient(135deg,rgba(34,211,238,.08),rgba(99,102,241,.1));border-bottom:1px solid var(--border);padding:20px 28px;display:flex;align-items:center;gap:14px}
 .form-card-icon{width:44px;height:44px;background:linear-gradient(135deg,#22d3ee,#6366f1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:#fff}
 .form-card-body{padding:28px}
+/* Global form label visibility fix */
+.form-label{color:#cbd5e1!important;font-size:.85rem!important;font-weight:600!important;margin-bottom:6px!important}
+.form-label .text-danger{color:#f87171!important}
 .form-label-custom{display:flex;align-items:center;gap:8px;font-size:.85rem;font-weight:600;color:#cbd5e1;margin-bottom:8px}
 .unit-badge{background:rgba(34,211,238,.1);color:var(--accent);border-radius:4px;padding:2px 7px;font-size:.75rem;font-weight:600;margin-left:auto}
-.custom-input{background:#0d1b2e!important;border:1px solid rgba(255,255,255,.1)!important;color:#fff!important;border-radius:9px!important;padding:11px 14px!important;font-size:.92rem!important;transition:.2s!important}
-.custom-input:focus{border-color:var(--accent)!important;box-shadow:0 0 0 3px rgba(34,211,238,.15)!important;outline:none!important}
+.custom-input{background:#0d1b2e!important;border:1px solid rgba(255,255,255,.1)!important;color:#e2e8f0!important;border-radius:9px!important;padding:11px 14px!important;font-size:.92rem!important;transition:.2s!important;color-scheme:dark!important}
+.custom-input:focus{border-color:var(--accent)!important;box-shadow:0 0 0 3px rgba(34,211,238,.15)!important;outline:none!important;color:#fff!important}
 .custom-input::placeholder{color:#475569!important}
+/* Force white text in all typed/selected values */
+.custom-input option{background:#0d1b2e;color:#e2e8f0}
+select.custom-input{color:#e2e8f0!important}
+/* Bootstrap form-control / form-select override */
+.form-control,.form-select{background-color:#0d1b2e!important;border-color:rgba(255,255,255,.1)!important;color:#e2e8f0!important;color-scheme:dark!important}
+.form-control:focus,.form-select:focus{background-color:#0d1b2e!important;color:#fff!important;border-color:var(--accent)!important;box-shadow:0 0 0 3px rgba(34,211,238,.15)!important}
+.form-control option,.form-select option{background:#0d1b2e!important;color:#e2e8f0!important}
+
 .input-wrapper{position:relative}
 .input-hint{font-size:.74rem;color:#475569;margin-top:5px}
 .input-indicator{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:8px;height:8px;border-radius:50%;background:transparent;transition:.3s}
@@ -275,3 +286,101 @@ body{font-family:'Inter',sans-serif;background:var(--bg-dark);color:var(--text-m
   .result-status-value,.result-card-title,.rec-title{color:#000}
   .result-status-sub,.rec-message,.result-mini-label,.result-status-label{color:#555}
 }
+
+/* ══════════════════════════════════════════
+   MODULE 3 – ANIMAL BEHAVIOUR TRACKING CSS
+══════════════════════════════════════════ */
+
+.live-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#f87171;padding:5px 12px;border-radius:50px;font-size:.75rem;font-weight:700;letter-spacing:.5px}
+.live-dot{width:8px;height:8px;border-radius:50%;background:#ef4444;animation:pulse-red 1.2s infinite}
+.badge-offline .live-dot{background:#6b7280;animation:none}
+@keyframes pulse-red{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.4)}}
+
+.trk-stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;text-align:center;transition:.3s}
+.trk-stat-card:hover{transform:translateY(-3px)}
+.trk-stat-card i{font-size:1.5rem;display:block;margin-bottom:8px}
+.trk-stat-val{font-size:2rem;font-weight:800;color:#fff;line-height:1;margin-bottom:4px}
+.trk-stat-label{font-size:.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px}
+.trk-blue i{color:#60a5fa}.trk-blue{border-top:2px solid #60a5fa}
+.trk-green i{color:#22c55e}.trk-green{border-top:2px solid #22c55e}
+.trk-yellow i{color:#eab308}.trk-yellow{border-top:2px solid #eab308}
+.trk-red i{color:#ef4444}.trk-red{border-top:2px solid #ef4444}
+
+.trk-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.trk-card-header{display:flex;align-items:center;justify-content:space-between;font-size:.88rem;font-weight:600;color:#fff}
+.trk-card-sub{border-top:1px solid var(--border);padding-top:12px}
+.trk-badge-green{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3);padding:3px 10px;border-radius:50px;font-size:.72rem;font-weight:600}
+.trk-badge-red{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3);padding:3px 10px;border-radius:50px;font-size:.72rem;font-weight:600}
+
+.feed-wrap{position:relative;background:#030810;border-radius:10px;overflow:hidden;min-height:320px;display:flex;align-items:center;justify-content:center}
+.feed-wrap img#videoFeed{width:100%;height:auto;display:block;border-radius:10px}
+.feed-overlay{position:absolute;inset:0;background:rgba(5,13,26,.92);display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#475569}
+.feed-overlay i{font-size:3rem}
+.feed-overlay span{font-size:1rem;font-weight:600}
+.feed-overlay small{font-size:.78rem;opacity:.6}
+
+.trk-table{color:#94a3b8;font-size:.82rem}
+.trk-table thead th{background:rgba(255,255,255,.03);color:#64748b;font-size:.75rem;text-transform:uppercase;letter-spacing:.4px;border-color:var(--border);padding:8px 10px}
+.trk-table td{border-color:var(--border);padding:8px 10px;vertical-align:middle}
+.beh-badge{padding:2px 10px;border-radius:50px;font-size:.74rem;font-weight:600;display:inline-block}
+
+.beh-ref-card{background:rgba(255,255,255,.03);border-radius:8px;padding:10px 14px;display:flex;align-items:flex-start;gap:12px;border:1px solid var(--border)}
+
+.alerts-panel{max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+.alert-empty{color:#475569;font-size:.82rem;text-align:center;padding:20px 0}
+.alert-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid;font-size:.8rem}
+.alert-crit{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.25);color:#fca5a5}
+.alert-warn{background:rgba(234,179,8,.07);border-color:rgba(234,179,8,.25);color:#fde047}
+.alert-info{background:rgba(34,211,238,.06);border-color:rgba(34,211,238,.2);color:#67e8f9}
+.alert-item i{font-size:1rem;flex-shrink:0;margin-top:1px}
+.alert-msg{font-weight:500;margin-bottom:2px}
+.alert-ts{opacity:.65;font-size:.72rem}
+.flex-1{flex:1}
+.btn-xs{padding:2px 8px;font-size:.75rem}
+
+/* Toggle button */
+.btn-toggle-track{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;padding:8px 20px;border-radius:8px;font-weight:600;font-size:.88rem;display:inline-flex;align-items:center;transition:.2s;box-shadow:0 0 16px rgba(34,197,94,.3)}
+.btn-toggle-track:hover{background:linear-gradient(135deg,#15803d,#166534);color:#fff;transform:translateY(-1px);box-shadow:0 0 24px rgba(34,197,94,.45)}
+.btn-toggle-track.btn-toggle-stop{background:linear-gradient(135deg,#dc2626,#b91c1c);box-shadow:0 0 16px rgba(239,68,68,.3)}
+.btn-toggle-track.btn-toggle-stop:hover{background:linear-gradient(135deg,#b91c1c,#991b1b);box-shadow:0 0 24px rgba(239,68,68,.45)}
+
+/* ══════════════════════════════════════════════
+   MODULE 4 – ANIMAL PROFILE MANAGEMENT CSS
+══════════════════════════════════════════════ */
+
+/* ── Animal card grid ── */
+.animal-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:relative;transition:.3s;overflow:hidden}
+.animal-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.4);border-color:#1e3a5f}
+.animal-status-ribbon{position:absolute;top:12px;right:12px;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:50px;letter-spacing:.4px;text-transform:uppercase}
+.status-active{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3)}
+.status-quarantine{background:rgba(234,179,8,.12);color:#fde047;border:1px solid rgba(234,179,8,.3)}
+.status-sold{background:rgba(96,165,250,.12);color:#93c5fd;border:1px solid rgba(96,165,250,.3)}
+.status-deceased{background:rgba(239,68,68,.1);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
+
+.animal-avatar{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#1e3a5f,#0a1628);display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin-bottom:12px;border:2px solid #1e3a5f}
+.animal-uid{font-size:.72rem;color:var(--accent);font-weight:700;letter-spacing:.5px;margin-bottom:4px}
+.animal-name{font-size:1.1rem;font-weight:700;color:#fff;margin:0 0 6px}
+.animal-meta{display:flex;gap:12px;flex-wrap:wrap;font-size:.76rem;color:#64748b}
+.animal-meta span{display:flex;align-items:center}
+.animal-tag-badge{display:inline-block;background:rgba(34,211,238,.08);color:#67e8f9;border:1px solid rgba(34,211,238,.2);padding:2px 10px;border-radius:50px;font-size:.72rem;font-weight:600}
+.animal-actions{display:flex;gap:6px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.btn-profile-view{background:linear-gradient(135deg,#1e3a5f,#0a2040);color:#60a5fa;border:1px solid #1e3a5f;flex:1;font-size:.8rem;font-weight:600;padding:6px 0;border-radius:6px;text-align:center}
+.btn-profile-view:hover{background:linear-gradient(135deg,#2a4a7f,#0d2850);color:#93c5fd}
+
+/* ── Empty state ── */
+.empty-state{text-align:center;padding:80px 20px;color:#475569}
+.empty-state i{font-size:4rem;display:block;margin-bottom:16px;opacity:.4}
+.empty-state h4{color:#94a3b8;margin-bottom:8px}
+
+/* ── Profile page ── */
+.profile-avatar-lg{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#1e3a5f,#0a1628);display:flex;align-items:center;justify-content:center;font-size:2rem;border:2px solid #1e4a8f;flex-shrink:0}
+.prof-tag{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#94a3b8;padding:3px 10px;border-radius:50px;font-size:.73rem;font-weight:500}
+.status-badge-active{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3);padding:3px 10px;border-radius:50px}
+.status-badge-quarantine{background:rgba(234,179,8,.12);color:#fde047;border:1px solid rgba(234,179,8,.3);padding:3px 10px;border-radius:50px}
+.status-badge-sold{background:rgba(96,165,250,.12);color:#93c5fd;border:1px solid rgba(96,165,250,.3);padding:3px 10px;border-radius:50px}
+.status-badge-deceased{background:rgba(239,68,68,.1);color:#fca5a5;border:1px solid rgba(239,68,68,.3);padding:3px 10px;border-radius:50px}
+
+/* ── Save-to-profile box on result page ── */
+.save-profile-box{background:linear-gradient(135deg,rgba(30,58,95,.6),rgba(10,22,40,.6));border:1px solid #1e3a5f;border-radius:var(--radius);padding:20px}
+.save-profile-title{font-size:.95rem;font-weight:700;color:#fff;margin-bottom:4px}
+.save-profile-sub{font-size:.8rem;color:#64748b}

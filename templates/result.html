@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Prediction Result – Smart Dairy Monitor{% endblock %}
+{% block title %}Prediction Result â€“ Smart Dairy Monitor{% endblock %}
 
 {% block content %}
 
@@ -16,14 +16,14 @@
     <h1 class="page-title mb-1">
       <i class="bi bi-clipboard2-data me-2"></i>Prediction Results
     </h1>
-    <p class="page-subtitle">AI analysis complete — see health status and recommendations below</p>
+    <p class="page-subtitle">AI analysis complete â€” see health status and recommendations below</p>
   </div>
 </div>
 
 <section class="py-5">
   <div class="container-xl">
 
-    <!-- ═══ STATUS BANNER ════════════════════════════ -->
+    <!-- â•â•â• STATUS BANNER â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <div class="result-banner {% if result.prediction == 1 %}result-banner-sick{% else %}result-banner-healthy{% endif %} mb-5 animate-fadein-up">
       <div class="row align-items-center g-4">
         <div class="col-md-2 text-center">
@@ -65,7 +65,7 @@
 
     <div class="row g-4">
 
-      <!-- ─── Left: Confidence + Input Summary ─── -->
+      <!-- â”€â”€â”€ Left: Confidence + Input Summary â”€â”€â”€ -->
       <div class="col-lg-4">
 
         <!-- Confidence Meter -->
@@ -111,7 +111,7 @@
           <div class="input-summary-list">
             <div class="input-summary-item">
               <span><i class="bi bi-thermometer-half me-2 text-primary"></i>Temperature</span>
-              <strong>{{ result.input_data.temperature }}°C
+              <strong>{{ result.input_data.temperature }}Â°C
                 {% if result.input_data.temperature > 39.2 %}
                 <i class="bi bi-arrow-up-circle-fill text-danger ms-1 small"></i>
                 {% elif result.input_data.temperature < 37.8 %}
@@ -179,7 +179,7 @@
         </div>
       </div>
 
-      <!-- ─── Right: Recommendations ─── -->
+      <!-- â”€â”€â”€ Right: Recommendations â”€â”€â”€ -->
       <div class="col-lg-8">
         <div class="result-card">
           <h5 class="result-card-title">
@@ -225,6 +225,25 @@
             <i class="bi bi-printer me-2"></i>Print Report
           </button>
         </div>
+
+        <!-- â”€â”€ Save to Animal Profile â”€â”€ -->
+        <div class="save-profile-box mt-4" id="saveProfileBox">
+          <div class="save-profile-title">
+            <i class="bi bi-journal-plus me-2 text-accent"></i>Save Result to Animal Profile
+          </div>
+          <div class="save-profile-sub">Link this prediction to an existing animal record for tracking history.</div>
+          <div class="d-flex gap-2 mt-3 flex-wrap align-items-center">
+            <select id="animalSelect" class="form-select custom-input" style="max-width:280px">
+              <option value="">Select animalâ€¦</option>
+            </select>
+            <button class="btn btn-success" id="btnSaveProfile" onclick="saveToProfile()" disabled>
+              <i class="bi bi-check2-circle me-2"></i>Save
+            </button>
+            <span id="saveMsg" class="text-success small d-none">
+              <i class="bi bi-check-circle-fill me-1"></i>Saved! <a id="profileLink" href="#" class="text-accent">View Profile â†’</a>
+            </span>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -235,28 +254,68 @@
 
 {% block extra_js %}
 <script>
-// ── Arc Animation ──────────────────────────────
 window.addEventListener('load', () => {
+  // Arc animation
   const confidence = {{ result.confidence }};
-  const arcFill = document.getElementById('arcFill');
-  const totalDash = 283;
+  const arcFill    = document.getElementById('arcFill');
+  const totalDash  = 283;
   const targetDash = totalDash - (totalDash * confidence / 100);
   let current = totalDash;
-  const step = (totalDash - targetDash) / 60;
-  const interval = setInterval(() => {
+  const step  = (totalDash - targetDash) / 60;
+  const timer = setInterval(() => {
     current -= step;
-    if (current <= targetDash) { current = targetDash; clearInterval(interval); }
+    if (current <= targetDash) { current = targetDash; clearInterval(timer); }
     arcFill.setAttribute('stroke-dashoffset', current);
   }, 16);
 
   // Metric bar animations
   document.querySelectorAll('.metric-fill').forEach(el => {
-    const w = el.dataset.width;
-    setTimeout(() => { el.style.width = w + '%'; }, 300);
+    setTimeout(() => { el.style.width = el.dataset.width + '%'; }, 300);
+  });
+
+  // Populate animal dropdown
+  fetch('/api/animals').then(r => r.json()).then(animals => {
+    const sel = document.getElementById('animalSelect');
+    animals.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.uid;
+      opt.textContent = `${a.name} (${a.uid})`;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', () => {
+      document.getElementById('btnSaveProfile').disabled = !sel.value;
+    });
   });
 });
 
-// ── Print Button ───────────────────────────────
 document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+async function saveToProfile() {
+  const uid = document.getElementById('animalSelect').value;
+  if (!uid) return;
+  const payload = {
+    temperature:    {{ result.input_data.temperature }},
+    humidity:       {{ result.input_data.humidity }},
+    milk_yield:     {{ result.input_data.milk_yield }},
+    weight:         {{ result.input_data.weight }},
+    heart_rate:     {{ result.input_data.heart_rate }},
+    activity_level: {{ result.input_data.activity_level }},
+    prediction:     '{{ result.prediction_label }}',
+    confidence:     {{ result.confidence }},
+    risk_level:     '{{ result.risk_level }}',
+    recommendations: {{ result.recommendations | tojson }}
+  };
+  const res = await fetch(`/animals/${uid}/save_health`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (res.ok) {
+    document.getElementById('saveMsg').classList.remove('d-none');
+    document.getElementById('profileLink').href = `/animals/${uid}`;
+    document.getElementById('btnSaveProfile').disabled = true;
+  }
+}
 </script>
 {% endblock %}
+

@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %}Animal Profiles – Smart Dairy Monitor{% endblock %}
+
+{% block content %}
+<div class="page-header" style="background:linear-gradient(135deg,#0a1a0f,#0d2d1a)">
+  <div class="container-xl">
+    <nav aria-label="breadcrumb"><ol class="breadcrumb mb-2">
+      <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Dashboard</a></li>
+      <li class="breadcrumb-item active">Animal Profiles</li>
+    </ol></nav>
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+      <div>
+        <h1 class="page-title mb-1"><i class="bi bi-journal-medical me-2"></i>Animal Profiles</h1>
+        <p class="page-subtitle">Manage livestock records · health history · behaviour logs</p>
+      </div>
+      <a href="{{ url_for('animal_new') }}" class="btn btn-success px-4 fw-600">
+        <i class="bi bi-plus-circle me-2"></i>Add New Animal
+      </a>
+    </div>
+  </div>
+</div>
+
+<section class="py-4" style="background:#060e1c;min-height:85vh">
+  <div class="container-xl">
+
+    <!-- Stat row -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="trk-stat-card trk-green">
+          <i class="bi bi-heart-pulse-fill"></i>
+          <div class="trk-stat-val">{{ animals|selectattr('status','eq','Active')|list|length }}</div>
+          <div class="trk-stat-label">Active Animals</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="trk-stat-card trk-blue">
+          <i class="bi bi-list-check"></i>
+          <div class="trk-stat-val">{{ animals|length }}</div>
+          <div class="trk-stat-label">Total Registered</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="trk-stat-card trk-yellow">
+          <i class="bi bi-shield-exclamation"></i>
+          <div class="trk-stat-val">{{ animals|selectattr('status','eq','Quarantine')|list|length }}</div>
+          <div class="trk-stat-label">In Quarantine</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="trk-stat-card trk-red">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <div class="trk-stat-val">{{ animals|selectattr('status','eq','Deceased')|list|length }}</div>
+          <div class="trk-stat-label">Deceased</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search & filter -->
+    <div class="trk-card mb-4">
+      <div class="row g-2 align-items-center">
+        <div class="col-md-5">
+          <input type="text" id="searchInput" class="form-control custom-input"
+                 placeholder="Search by name, breed, UID or tag…" oninput="filterAnimals()">
+        </div>
+        <div class="col-md-3">
+          <select class="form-select custom-input" id="statusFilter" onchange="filterAnimals()">
+            <option value="">All Status</option>
+            <option value="Active">Active</option>
+            <option value="Quarantine">Quarantine</option>
+            <option value="Sold">Sold</option>
+            <option value="Deceased">Deceased</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <select class="form-select custom-input" id="genderFilter" onchange="filterAnimals()">
+            <option value="">All Genders</option>
+            <option value="Female">Female</option>
+            <option value="Male">Male</option>
+          </select>
+        </div>
+        <div class="col-md-2 text-end">
+          <span id="resultCount" class="text-muted small">{{ animals|length }} animals</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Animal cards grid -->
+    {% if animals %}
+    <div class="row g-3" id="animalGrid">
+      {% for a in animals %}
+      <div class="col-md-6 col-lg-4 animal-card-wrap"
+           data-name="{{ a.name|lower }}"
+           data-breed="{{ a.breed|lower }}"
+           data-uid="{{ a.uid|lower }}"
+           data-tag="{{ a.tag_number|lower }}"
+           data-status="{{ a.status }}"
+           data-gender="{{ a.gender }}">
+        <div class="animal-card">
+          <!-- Status ribbon -->
+          <div class="animal-status-ribbon status-{{ a.status|lower }}">{{ a.status }}</div>
+
+          <!-- Avatar -->
+          <div class="animal-avatar">
+            <i class="bi bi-{{ 'cow' if 'cow' in a.breed|lower else 'piggy-bank' if 'pig' in a.breed|lower else 'shield-fill' }}"></i>
+          </div>
+
+          <!-- Info -->
+          <div class="animal-info">
+            <div class="animal-uid">{{ a.uid }}</div>
+            <h5 class="animal-name">{{ a.name }}</h5>
+            <div class="animal-meta">
+              <span><i class="bi bi-tag me-1"></i>{{ a.breed }}</span>
+              <span><i class="bi bi-gender-{{ 'female' if a.gender=='Female' else 'male' }} me-1"></i>{{ a.gender }}</span>
+            </div>
+            <div class="animal-meta mt-1">
+              <span><i class="bi bi-calendar3 me-1"></i>{{ a.age_years }} yrs</span>
+              <span><i class="bi bi-speedometer2 me-1"></i>{{ a.weight_kg }} kg</span>
+            </div>
+            {% if a.tag_number %}
+            <div class="animal-tag-badge mt-2">🏷 {{ a.tag_number }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Actions -->
+          <div class="animal-actions">
+            <a href="{{ url_for('animal_profile', uid=a.uid) }}" class="btn btn-sm btn-profile-view">
+              <i class="bi bi-eye me-1"></i>View Profile
+            </a>
+            <a href="{{ url_for('animal_edit', uid=a.uid) }}" class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <button class="btn btn-sm btn-outline-danger"
+                    onclick="confirmDelete('{{ a.uid }}','{{ a.name }}')">
+              <i class="bi bi-trash3"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+      <i class="bi bi-journal-x"></i>
+      <h4>No Animal Profiles Yet</h4>
+      <p class="text-muted">Start by adding your first animal to the system.</p>
+      <a href="{{ url_for('animal_new') }}" class="btn btn-success px-4 mt-2">
+        <i class="bi bi-plus-circle me-2"></i>Add First Animal
+      </a>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+
+<!-- Delete confirm modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background:#0d1b2e;border:1px solid #1e3a5f">
+      <div class="modal-header border-0">
+        <h5 class="modal-title text-danger"><i class="bi bi-trash3 me-2"></i>Delete Animal</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-white">
+        Are you sure you want to permanently delete <strong id="deleteAnimalName"></strong>?
+        <br><small class="text-muted mt-1 d-block">All health records and behaviour logs will also be deleted.</small>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <form id="deleteForm" method="POST">
+          <input type="hidden" name="_method" value="DELETE">
+          <button type="submit" class="btn btn-danger">Delete Permanently</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filterAnimals() {
+  const q      = document.getElementById('searchInput').value.toLowerCase();
+  const status = document.getElementById('statusFilter').value;
+  const gender = document.getElementById('genderFilter').value;
+  const cards  = document.querySelectorAll('.animal-card-wrap');
+  let visible  = 0;
+
+  cards.forEach(c => {
+    const matchQ = !q || c.dataset.name.includes(q) || c.dataset.breed.includes(q)
+                     || c.dataset.uid.includes(q) || c.dataset.tag.includes(q);
+    const matchS = !status || c.dataset.status === status;
+    const matchG = !gender || c.dataset.gender === gender;
+    const show   = matchQ && matchS && matchG;
+    c.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  document.getElementById('resultCount').textContent = `${visible} animals`;
+}
+
+function confirmDelete(uid, name) {
+  document.getElementById('deleteAnimalName').textContent = name;
+  document.getElementById('deleteForm').action = `/animals/${uid}/delete`;
+  new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %}

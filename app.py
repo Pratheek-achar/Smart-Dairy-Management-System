@@ -8,7 +8,8 @@ import json
 import joblib
 import numpy as np
 import pandas as pd
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, Response, stream_with_context, redirect, url_for, flash
+import database as db
 
 # ─────────────────────────────────────────────
 # App Setup
@@ -27,6 +28,9 @@ MODEL_NAME = model_data['best_name']
 ALL_RESULTS = model_data.get('all_results', {})
 
 print(f"✅  Model loaded: {MODEL_NAME}  (accuracy={model_data['accuracy']*100:.1f}%)")
+
+# Initialise SQLite database
+db.init_db()
 
 # ─────────────────────────────────────────────
 # Thresholds (physiological reference values)
@@ -333,8 +337,212 @@ def about():
     return render_template('about.html')
 
 
+# ═════════════════════════════════════════════════════════════════
+# MODULE 3 — ANIMAL BEHAVIOUR TRACKING
+# ═════════════════════════════════════════════════════════════════
+
+def _get_stream():
+    """Lazy-load VideoStream so the app boots even without a camera."""
+    try:
+        from behaviour_tracking.video_stream import VideoStream
+        vs = VideoStream.get_instance()
+        if not vs.running:
+            import threading
+            t = threading.Thread(target=vs.start, daemon=True)
+            t.start()
+        return vs
+    except Exception as e:
+        print(f"[Tracking] VideoStream unavailable: {e}")
+        return None
+
+
+@app.route('/tracking')
+def tracking():
+    """Render the live animal behaviour tracking dashboard."""
+    return render_template('tracking.html')
+
+
+@app.route('/video_feed')
+def video_feed():
+    """MJPEG stream of annotated camera frames."""
+    vs = _get_stream()
+    if vs is None:
+        return jsonify({'error': 'Camera module unavailable'}), 503
+
+    return Response(
+        stream_with_context(vs.mjpeg_generator()),
+        mimetype='multipart/x-mixed-replace; boundary=frame'
+    )
+
+
+@app.route('/tracking_stats')
+def tracking_stats():
+    """JSON snapshot of current tracking state for dashboard polling."""
+    vs = _get_stream()
+    if vs is None:
+        return jsonify({'error': 'Camera module unavailable'}), 503
+    stats = vs.get_stats()
+    # Make alerts JSON-serialisable
+    for a in stats.get('alerts', []):
+        a['timestamp'] = round(a.get('timestamp', 0), 1)
+    return jsonify(stats)
+
+
+@app.route('/tracking_alerts')
+def tracking_alerts():
+    """Server-Sent Events stream for real-time alert notifications."""
+    import json as _json
+    import time as _time
+
+    def generate():
+        vs = _get_stream()
+        last_ts = 0.0
+        while True:
+            if vs:
+                stats = vs.get_stats()
+                for alert in stats.get('alerts', []):
+                    ts = alert.get('timestamp', 0)
+                    if ts > last_ts:
+                        last_ts = ts
+                        data = _json.dumps(alert)
+                        yield f"data: {data}\n\n"
+            _time.sleep(0.5)
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype='text/event-stream',
+        headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'}
+    )
+
+
+@app.route('/tracking/upload', methods=['POST'])
+def tracking_upload():
+    """Accept an uploaded video file and switch the stream source to it."""
+    if 'video' not in request.files:
+        return jsonify({'error': 'No video file provided'}), 400
+    f    = request.files['video']
+    path = os.path.join(BASE_DIR, 'static', 'uploads', f.filename)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    f.save(path)
+    vs = _get_stream()
+    if vs:
+        vs.switch_source(path)
+    return jsonify({'status': 'ok', 'path': path})
+
+
+@app.route('/tracking/use_webcam', methods=['POST'])
+def tracking_use_webcam():
+    """Switch back to webcam (source index 0)."""
+    vs = _get_stream()
+    if vs:
+        vs.switch_source(0)
+    return jsonify({'status': 'ok', 'source': 'webcam'})
+
+
+# ═════════════════════════════════════════════════════════════════
+# MODULE 4 — ANIMAL PROFILE MANAGEMENT
+# ═════════════════════════════════════════════════════════════════
+
+@app.route('/animals')
+def animals_list():
+    """List all animal profiles."""
+    animals = db.get_all_animals()
+    return render_template('animals.html', animals=animals)
+
+
+@app.route('/animals/new', methods=['GET', 'POST'])
+def animal_new():
+    """Register a new animal."""
+    if request.method == 'POST':
+        uid = db.create_animal(request.form.to_dict())
+        return redirect(url_for('animal_profile', uid=uid))
+    return render_template('animal_form.html', animal=None)
+
+
+@app.route('/animals/<uid>')
+def animal_profile(uid):
+    """View an animal's full profile."""
+    animal = db.get_animal(uid)
+    if not animal:
+        return render_template('404.html'), 404
+    stats          = db.get_animal_stats(uid)
+    health_records = db.get_health_records(uid, limit=20)
+    behaviour_logs = db.get_behaviour_logs(uid, limit=20)
+    return render_template('animal_profile.html',
+                           animal=animal,
+                           stats=stats,
+                           health_records=health_records,
+                           behaviour_logs=behaviour_logs)
+
+
+@app.route('/animals/<uid>/edit', methods=['GET', 'POST'])
+def animal_edit(uid):
+    """Edit an animal's profile."""
+    animal = db.get_animal(uid)
+    if not animal:
+        return redirect(url_for('animals_list'))
+    if request.method == 'POST':
+        db.update_animal(uid, request.form.to_dict())
+        return redirect(url_for('animal_profile', uid=uid))
+    return render_template('animal_form.html', animal=animal)
+
+
+@app.route('/animals/<uid>/delete', methods=['POST'])
+def animal_delete(uid):
+    """Delete an animal and all associated records."""
+    db.delete_animal(uid)
+    return redirect(url_for('animals_list'))
+
+
+@app.route('/animals/<uid>/save_health', methods=['POST'])
+def animal_save_health(uid):
+    """Save a health prediction result to an animal's record."""
+    animal = db.get_animal(uid)
+    if not animal:
+        return jsonify({'error': 'Animal not found'}), 404
+    data = request.get_json() or request.form.to_dict()
+    record_id = db.add_health_record(uid, {
+        'temperature':    data.get('temperature'),
+        'humidity':       data.get('humidity'),
+        'milk_yield':     data.get('milk_yield'),
+        'weight_kg':      data.get('weight'),
+        'heart_rate':     data.get('heart_rate'),
+        'activity_level': data.get('activity_level'),
+        'prediction':     data.get('prediction'),
+        'confidence':     data.get('confidence'),
+        'risk_level':     data.get('risk_level'),
+        'recommendations': data.get('recommendations', []),
+    })
+    if request.is_json:
+        return jsonify({'status': 'saved', 'record_id': record_id})
+    return redirect(url_for('animal_profile', uid=uid))
+
+
+@app.route('/animals/<uid>/save_behaviour', methods=['POST'])
+def animal_save_behaviour(uid):
+    """Log a behaviour event to an animal's record."""
+    animal = db.get_animal(uid)
+    if not animal:
+        return jsonify({'error': 'Animal not found'}), 404
+    data = request.get_json() or {}
+    record_id = db.add_behaviour_log(uid, {
+        'behaviour':   data.get('behaviour'),
+        'duration_sec': data.get('duration_sec', 0),
+        'velocity':    data.get('velocity', 0),
+        'alert_msg':   data.get('alert_msg', ''),
+    })
+    return jsonify({'status': 'saved', 'record_id': record_id})
+
+
+@app.route('/api/animals')
+def api_animals():
+    """JSON list of all animals (for dropdowns in predict/tracking forms)."""
+    animals = db.get_all_animals(status_filter='Active')
+    return jsonify([{'uid': a['uid'], 'name': a['name'], 'breed': a['breed']} for a in animals])
+
+
 # ─────────────────────────────────────────────
 # Entry Point
 # ─────────────────────────────────────────────
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=5000, threaded=True)
