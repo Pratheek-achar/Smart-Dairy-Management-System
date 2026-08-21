@@ -1,318 +1,405 @@
 {% extends "base.html" %}
 {% block title %}Dashboard – Smart Dairy Livestock Monitoring System{% endblock %}
 
+{% block extra_css %}
+<style>
+/* ── Hero ── */
+.dash-hero{background:linear-gradient(135deg,#020b18 0%,#061220 40%,#091a10 100%);padding:52px 0 40px;border-bottom:1px solid #1e3a5f}
+.hero-badge{display:inline-flex;align-items:center;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.25);color:var(--accent);padding:6px 16px;border-radius:50px;font-size:.78rem;font-weight:600;letter-spacing:.4px;margin-bottom:18px}
+.hero-title{font-size:clamp(2rem,4vw,3rem);font-weight:800;line-height:1.15;color:#f1f5f9;margin-bottom:14px}
+.text-gradient{background:linear-gradient(135deg,#22d3ee,#6366f1);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-desc{color:#64748b;font-size:1rem;max-width:480px;line-height:1.7}
+
+/* ── Live KPI row ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin:28px 0}
+.kpi-card{background:#0b1626;border:1px solid #1e3a5f;border-radius:14px;padding:20px 18px;text-align:center;transition:.25s;position:relative;overflow:hidden}
+.kpi-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent,rgba(255,255,255,.015));pointer-events:none}
+.kpi-card:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.4);border-color:#22d3ee40}
+.kpi-icon{font-size:1.6rem;margin-bottom:6px;display:block}
+.kpi-val{font-size:2rem;font-weight:800;color:#f1f5f9;line-height:1}
+.kpi-label{font-size:.72rem;color:#64748b;margin-top:4px;font-weight:500;text-transform:uppercase;letter-spacing:.4px}
+.kpi-green .kpi-icon{color:#4ade80}
+.kpi-blue  .kpi-icon{color:#60a5fa}
+.kpi-yellow.kpi-icon,.kpi-yellow .kpi-icon{color:#fbbf24}
+.kpi-red   .kpi-icon{color:#f87171}
+.kpi-cyan  .kpi-icon{color:#22d3ee}
+.kpi-purple.kpi-icon,.kpi-purple .kpi-icon{color:#a78bfa}
+
+/* ── Section labels ── */
+.dash-section-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#475569;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.dash-section-label::after{content:'';flex:1;height:1px;background:#1e3a5f}
+
+/* ── Module cards ── */
+.module-card{background:#0b1626;border:1px solid #1e3a5f;border-radius:16px;padding:24px;transition:.3s;position:relative;overflow:hidden;height:100%}
+.module-card:hover{transform:translateY(-4px);box-shadow:0 12px 36px rgba(0,0,0,.45);border-color:#22d3ee40}
+.module-card-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:16px}
+.mc-blue  {background:linear-gradient(135deg,#1e40af,#1d4ed8)}
+.mc-green {background:linear-gradient(135deg,#15803d,#16a34a)}
+.mc-purple{background:linear-gradient(135deg,#6d28d9,#7c3aed)}
+.mc-orange{background:linear-gradient(135deg,#c2410c,#ea580c)}
+.module-card h5{font-size:.95rem;font-weight:700;color:#f1f5f9;margin-bottom:8px}
+.module-card p{font-size:.8rem;color:#64748b;line-height:1.6;margin-bottom:16px}
+.module-pill{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:50px;margin-bottom:4px}
+
+/* ── Activity list ── */
+.activity-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #0f2040}
+.activity-item:last-child{border-bottom:none}
+.activity-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.activity-text{font-size:.82rem;color:#94a3b8;flex:1;min-width:0}
+.activity-text strong{color:#e2e8f0}
+.activity-time{font-size:.72rem;color:#475569;white-space:nowrap}
+
+/* ── Upcoming vax list ── */
+.vax-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #0f2040}
+.vax-item:last-child{border-bottom:none}
+.vax-date{font-size:.72rem;font-weight:700;color:#fbbf24;min-width:72px}
+.vax-overdue{color:#f87171}
+
+/* ── ML metric mini bars ── */
+.ml-bar-wrap{margin-top:4px}
+.ml-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:.78rem}
+.ml-bar-label{color:#64748b;width:72px;flex-shrink:0}
+.ml-bar-track{flex:1;height:6px;background:#1e3a5f;border-radius:50px;overflow:hidden}
+.ml-bar-fill{height:100%;border-radius:50px;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+
+/* ── CTA ── */
+.cta-banner{background:linear-gradient(135deg,#0f2d1a,#0a1f3d);border:1px solid #1e3a5f;border-radius:18px;padding:36px 32px;text-align:center}
+.cta-banner h3{font-size:1.5rem;font-weight:800;color:#f1f5f9;margin-bottom:8px}
+.cta-banner p{color:#64748b;margin-bottom:24px}
+</style>
+{% endblock %}
+
 {% block content %}
 
-<!-- ═══════════════════════════════════════════
-     HERO SECTION
-════════════════════════════════════════════ -->
-<section class="hero-section">
-  <div class="hero-particles" id="particles"></div>
-  <div class="container-xl position-relative z-1">
-    <div class="row align-items-center min-vh-80 py-5">
-      <div class="col-lg-6">
-        <div class="hero-badge mb-3 animate-fadein-up" style="animation-delay:0.1s">
-          <i class="bi bi-stars me-2"></i>AI-Powered Monitoring
-        </div>
-        <h1 class="hero-title animate-fadein-up" style="animation-delay:0.2s">
-          Smart Dairy<br/>
-          <span class="text-gradient">Livestock Health</span><br/>
-          Monitoring System
-        </h1>
-        <p class="hero-desc animate-fadein-up" style="animation-delay:0.3s">
-          Leverage the power of Machine Learning to predict dairy animal health,
-          detect early signs of illness, and receive intelligent care recommendations —
-          all in real time.
-        </p>
-        <div class="d-flex flex-wrap gap-3 animate-fadein-up" style="animation-delay:0.4s">
-          <a href="{{ url_for('predict') }}" class="btn btn-hero-primary">
-            <i class="bi bi-lightning-fill me-2"></i>Start Prediction
-          </a>
-          <a href="#model-section" class="btn btn-hero-outline">
-            <i class="bi bi-bar-chart-line me-2"></i>View Model Stats
-          </a>
-        </div>
-
-        <!-- Quick Stats -->
-        <div class="hero-stats mt-5 animate-fadein-up" style="animation-delay:0.5s">
-          <div class="stat-item">
-            <span class="stat-number" data-target="{{ stats.accuracy }}">0</span><span class="stat-unit">%</span>
-            <span class="stat-label">Model Accuracy</span>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <span class="stat-number" data-target="2000">0</span><span class="stat-unit">+</span>
-            <span class="stat-label">Training Samples</span>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <span class="stat-number" data-target="3">0</span><span class="stat-unit"></span>
-            <span class="stat-label">ML Algorithms</span>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <span class="stat-number" data-target="6">0</span><span class="stat-unit"></span>
-            <span class="stat-label">Health Indicators</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-lg-6 mt-5 mt-lg-0 animate-fadein-up" style="animation-delay:0.3s">
-        <div class="hero-visual">
-          <div class="hero-card-float card-float-1">
-            <i class="bi bi-heart-pulse-fill text-danger"></i>
-            <span>Heart Rate <strong>68 bpm</strong></span>
-          </div>
-          <div class="hero-card-float card-float-2">
-            <i class="bi bi-thermometer-half text-warning"></i>
-            <span>Temperature <strong>38.5°C</strong></span>
-          </div>
-          <div class="hero-card-float card-float-3">
-            <i class="bi bi-check-circle-fill text-success"></i>
-            <span>Status: <strong>Healthy</strong></span>
-          </div>
-          <div class="hero-illustration">
-            <div class="illustration-ring ring-1"></div>
-            <div class="illustration-ring ring-2"></div>
-            <div class="illustration-ring ring-3"></div>
-            <div class="illustration-center">
-              <i class="bi bi-cpu-fill"></i>
-              <span>AI Engine</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════════════════════════════════════
-     FEATURES SECTION
-════════════════════════════════════════════ -->
-<section class="features-section py-5">
+<!-- ═══ HERO ═══════════════════════════════════════ -->
+<section class="dash-hero">
   <div class="container-xl">
-    <div class="section-header text-center mb-5">
-      <span class="section-badge">System Capabilities</span>
-      <h2 class="section-title">Two Powerful Modules</h2>
-      <p class="section-sub">Complete AI-driven livestock management at your fingertips</p>
-    </div>
-
-    <div class="row g-4">
-      <!-- Module 1 -->
-      <div class="col-md-6">
-        <div class="feature-card h-100" id="module-health">
-          <div class="feature-icon-wrap">
-            <div class="feature-icon bg-gradient-blue">
-              <i class="bi bi-cpu-fill"></i>
-            </div>
-          </div>
-          <h3 class="feature-title">Module 1: Health Prediction</h3>
-          <p class="feature-desc">
-            Advanced ML classification engine powered by <strong>Random Forest</strong>
-            to predict if a livestock animal is <em>Healthy</em> or <em>Sick/At Risk</em>
-            based on 6 physiological and environmental parameters.
-          </p>
-          <ul class="feature-list">
-            <li><i class="bi bi-check2-circle"></i> Multi-algorithm comparison (DT, RF, LR)</li>
-            <li><i class="bi bi-check2-circle"></i> Confidence percentage output</li>
-            <li><i class="bi bi-check2-circle"></i> Real-time prediction in milliseconds</li>
-            <li><i class="bi bi-check2-circle"></i> Body temp, milk yield, weight, heart rate</li>
-          </ul>
-          <a href="{{ url_for('predict') }}" class="btn btn-module mt-3">
-            <i class="bi bi-play-circle me-2"></i>Try Prediction
-          </a>
-        </div>
-      </div>
-
-      <!-- Module 2 -->
-      <div class="col-md-6">
-        <div class="feature-card h-100" id="module-recommend">
-          <div class="feature-icon-wrap">
-            <div class="feature-icon bg-gradient-green">
-              <i class="bi bi-lightbulb-fill"></i>
-            </div>
-          </div>
-          <h3 class="feature-title">Module 2: Smart Recommendations</h3>
-          <p class="feature-desc">
-            Intelligent rule-based recommendation engine that dynamically generates
-            actionable veterinary and farm management advice based on ML results
-            and environmental conditions.
-          </p>
-          <ul class="feature-list">
-            <li><i class="bi bi-check2-circle"></i> Dynamic veterinary recommendations</li>
-            <li><i class="bi bi-check2-circle"></i> Temperature & humidity alerts</li>
-            <li><i class="bi bi-check2-circle"></i> Nutrition & feed guidance</li>
-            <li><i class="bi bi-check2-circle"></i> Isolation & biosecurity advice</li>
-          </ul>
-          <a href="{{ url_for('predict') }}" class="btn btn-module mt-3">
-            <i class="bi bi-arrow-right-circle me-2"></i>Get Recommendations
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Input Parameters Cards -->
-    <div class="row g-3 mt-4">
-      {% set params = [
-        ('bi-thermometer-half','Body Temperature','Normal: 38.0–39.0°C','param-blue'),
-        ('bi-droplet-fill','Humidity','Optimal: 40–75%','param-cyan'),
-        ('bi-cup-hot-fill','Milk Yield','Target: ≥15 L/day','param-green'),
-        ('bi-bar-chart-fill','Body Weight','Healthy: ≥420 kg','param-orange'),
-        ('bi-heart-pulse-fill','Heart Rate','Normal: 55–80 bpm','param-red'),
-        ('bi-person-walking','Activity Level','Active: ≥50%','param-purple'),
-      ] %}
-      {% for icon, name, range, cls in params %}
-      <div class="col-6 col-md-4 col-lg-2">
-        <div class="param-card {{ cls }}">
-          <i class="bi {{ icon }} param-icon"></i>
-          <div class="param-name">{{ name }}</div>
-          <div class="param-range">{{ range }}</div>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════════════════════════════════════
-     MODEL PERFORMANCE SECTION
-════════════════════════════════════════════ -->
-<section class="model-section py-5" id="model-section">
-  <div class="container-xl">
-    <div class="section-header text-center mb-5">
-      <span class="section-badge">Machine Learning</span>
-      <h2 class="section-title">Model Performance</h2>
-      <p class="section-sub">Evaluated on hold-out test set with 5-fold cross-validation</p>
-    </div>
-
-    <!-- Best Model Banner -->
-    <div class="best-model-banner mb-5">
-      <div class="row align-items-center">
-        <div class="col-md-8">
-          <div class="d-flex align-items-center gap-3 mb-2">
-            <div class="trophy-icon"><i class="bi bi-trophy-fill"></i></div>
-            <div>
-              <h4 class="mb-0 text-white">Best Model: {{ stats.model_name }}</h4>
-              <p class="mb-0 opacity-75">Selected based on highest test accuracy</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4 text-md-end mt-3 mt-md-0">
-          <div class="best-model-accuracy">{{ stats.accuracy }}%</div>
-          <div class="opacity-75 small">Test Accuracy</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Metric Cards -->
-    <div class="row g-4 mb-5">
-      {% set metrics = [
-        ('Accuracy', stats.accuracy, 'bi-bullseye', 'metric-blue', 'Correctly classified samples'),
-        ('Precision', stats.precision, 'bi-crosshair', 'metric-green', 'Positive predictive value'),
-        ('Recall', stats.recall, 'bi-search', 'metric-orange', 'Sensitivity / True positive rate'),
-        ('F1 Score', stats.f1, 'bi-award-fill', 'metric-purple', 'Harmonic mean of precision & recall'),
-        ('CV Accuracy', stats.cv_accuracy, 'bi-arrow-repeat', 'metric-cyan', '5-fold cross-validation score'),
-      ] %}
-      {% for label, val, icon, cls, desc in metrics %}
-      <div class="col-6 col-md-4 col-lg">
-        <div class="metric-card {{ cls }}">
-          <i class="bi {{ icon }} metric-icon"></i>
-          <div class="metric-value" data-target="{{ val }}">0</div>
-          <div class="metric-unit">%</div>
-          <div class="metric-label">{{ label }}</div>
-          <div class="metric-desc">{{ desc }}</div>
-          <div class="metric-bar">
-            <div class="metric-fill" style="width:0%" data-width="{{ val }}"></div>
-          </div>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-
-    <!-- Model Comparison Table -->
-    <div class="row g-4">
+    <div class="row align-items-center g-4">
       <div class="col-lg-7">
-        <div class="chart-card">
-          <h5 class="chart-title"><i class="bi bi-bar-chart me-2"></i>Algorithm Comparison</h5>
-          <div class="table-responsive">
-            <table class="table compare-table mb-0">
-              <thead>
-                <tr>
-                  <th>Algorithm</th>
-                  <th>Accuracy</th>
-                  <th>Precision</th>
-                  <th>Recall</th>
-                  <th>F1</th>
-                  <th>Best</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for name, m in stats.all_results.items() %}
-                <tr class="{% if name == stats.model_name %}best-row{% endif %}">
-                  <td class="fw-500">{{ name }}</td>
-                  <td>{{ m.accuracy }}%</td>
-                  <td>{{ m.precision }}%</td>
-                  <td>{{ m.recall }}%</td>
-                  <td>{{ m.f1 }}%</td>
-                  <td>
-                    {% if name == stats.model_name %}
-                    <span class="badge bg-success"><i class="bi bi-check2"></i> Best</span>
-                    {% else %}
-                    <span class="badge bg-secondary">—</span>
-                    {% endif %}
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
+        <div class="hero-badge"><i class="bi bi-stars me-2"></i>AI-Powered Dairy Farm Intelligence</div>
+        <h1 class="hero-title">Smart Dairy<br><span class="text-gradient">Livestock Monitoring</span><br>Decision Support System</h1>
+        <p class="hero-desc">Real-time AI surveillance, predictive health analytics, animal profile management, and vaccination scheduling — all in one system.</p>
+        <div class="d-flex flex-wrap gap-3 mt-4">
+          <a href="{{ url_for('predict') }}" class="btn btn-hero-primary">
+            <i class="bi bi-lightning-fill me-2"></i>Run Health Prediction
+          </a>
+          <a href="{{ url_for('animals_list') }}" class="btn btn-hero-outline">
+            <i class="bi bi-journal-medical me-2"></i>View Animal Profiles
+          </a>
         </div>
       </div>
-
       <div class="col-lg-5">
-        <div class="chart-card h-100 d-flex flex-column">
-          <h5 class="chart-title"><i class="bi bi-grid me-2"></i>Confusion Matrix</h5>
-          <div class="flex-grow-1 d-flex align-items-center justify-content-center">
-            <img src="{{ url_for('static', filename='images/confusion_matrix.png') }}"
-                 alt="Confusion Matrix" class="img-fluid rounded chart-img" />
+        <!-- Live KPI strip -->
+        <div class="kpi-grid">
+          <div class="kpi-card kpi-green">
+            <span class="kpi-icon"><i class="bi bi-heart-pulse-fill"></i></span>
+            <div class="kpi-val">{{ db.active }}</div>
+            <div class="kpi-label">Active Animals</div>
+          </div>
+          <div class="kpi-card kpi-blue">
+            <span class="kpi-icon"><i class="bi bi-journal-medical"></i></span>
+            <div class="kpi-val">{{ db.total }}</div>
+            <div class="kpi-label">Total Registered</div>
+          </div>
+          <div class="kpi-card kpi-yellow">
+            <span class="kpi-icon"><i class="bi bi-syringe"></i></span>
+            <div class="kpi-val">{{ db.pending_vax }}</div>
+            <div class="kpi-label">Upcoming Vaccines</div>
+          </div>
+          <div class="kpi-card kpi-red">
+            <span class="kpi-icon"><i class="bi bi-exclamation-triangle-fill"></i></span>
+            <div class="kpi-val">{{ db.overdue_vax }}</div>
+            <div class="kpi-label">Overdue Vaccines</div>
+          </div>
+          <div class="kpi-card kpi-cyan">
+            <span class="kpi-icon"><i class="bi bi-bullseye"></i></span>
+            <div class="kpi-val">{{ stats.accuracy }}%</div>
+            <div class="kpi-label">Model Accuracy</div>
+          </div>
+          <div class="kpi-card kpi-purple">
+            <span class="kpi-icon"><i class="bi bi-cpu-fill"></i></span>
+            <div class="kpi-val">{{ stats.model_name.split()[0] }}</div>
+            <div class="kpi-label">Best ML Model</div>
           </div>
         </div>
       </div>
     </div>
+  </div>
+</section>
 
-    <!-- Feature Importance -->
-    <div class="row g-4 mt-1">
-      <div class="col-12">
-        <div class="chart-card">
-          <h5 class="chart-title"><i class="bi bi-diagram-3 me-2"></i>Feature Importance (Random Forest)</h5>
-          <img src="{{ url_for('static', filename='images/feature_importance.png') }}"
-               alt="Feature Importance" class="img-fluid rounded chart-img" style="max-height:280px;object-fit:contain;width:100%" />
+<!-- ═══ MAIN CONTENT ══════════════════════════════ -->
+<section class="py-4" style="background:#060e1c">
+  <div class="container-xl">
+
+    <div class="row g-4">
+
+      <!-- ── Left: Modules + ML ── -->
+      <div class="col-lg-8">
+
+        <!-- System Modules -->
+        <div class="dash-section-label"><i class="bi bi-grid-3x3-gap me-2"></i>System Modules</div>
+        <div class="row g-3 mb-4">
+          <div class="col-sm-6">
+            <div class="module-card">
+              <div class="module-card-icon mc-blue"><i class="bi bi-cpu-fill text-white"></i></div>
+              <h5>Health Prediction</h5>
+              <p>ML-based prediction using Random Forest, Decision Tree & Logistic Regression on 6 physiological parameters.</p>
+              <div class="mb-3">
+                <span class="module-pill" style="background:rgba(96,165,250,.1);color:#60a5fa;border:1px solid rgba(96,165,250,.2)">
+                  <i class="bi bi-check2-circle"></i> {{ stats.accuracy }}% Accuracy
+                </span>
+                <span class="module-pill ms-1" style="background:rgba(34,197,94,.1);color:#4ade80;border:1px solid rgba(34,197,94,.2)">
+                  <i class="bi bi-lightning"></i> Real-time
+                </span>
+              </div>
+              <a href="{{ url_for('predict') }}" class="btn btn-sm btn-outline-info fw-600 w-100">
+                <i class="bi bi-play-circle me-1"></i>Run Prediction
+              </a>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="module-card">
+              <div class="module-card-icon mc-green"><i class="bi bi-camera-video-fill text-white"></i></div>
+              <h5>Live Behaviour Tracking</h5>
+              <p>YOLOv8 + DeepSORT real-time surveillance — detects Resting, Feeding, Stress, Aggressive and more.</p>
+              <div class="mb-3">
+                <span class="module-pill" style="background:rgba(34,197,94,.1);color:#4ade80;border:1px solid rgba(34,197,94,.2)">
+                  <i class="bi bi-camera"></i> YOLOv8
+                </span>
+                <span class="module-pill ms-1" style="background:rgba(249,115,22,.1);color:#fb923c;border:1px solid rgba(249,115,22,.2)">
+                  <i class="bi bi-arrow-repeat"></i> DeepSORT
+                </span>
+              </div>
+              <a href="{{ url_for('tracking') }}" class="btn btn-sm btn-outline-success fw-600 w-100">
+                <i class="bi bi-camera-video me-1"></i>Open Tracker
+              </a>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="module-card">
+              <div class="module-card-icon mc-purple"><i class="bi bi-journal-medical text-white"></i></div>
+              <h5>Animal Profile Manager</h5>
+              <p>CRUD profiles with unique IDs (SDMS-YYYY-NNNN), health history, weight trends, and behaviour logs.</p>
+              <div class="mb-3">
+                <span class="module-pill" style="background:rgba(167,139,250,.1);color:#a78bfa;border:1px solid rgba(167,139,250,.2)">
+                  <i class="bi bi-database"></i> SQLite
+                </span>
+                <span class="module-pill ms-1" style="background:rgba(34,211,238,.1);color:#22d3ee;border:1px solid rgba(34,211,238,.2)">
+                  <i class="bi bi-person-badge"></i> {{ db.total }} Animals
+                </span>
+              </div>
+              <a href="{{ url_for('animals_list') }}" class="btn btn-sm btn-outline-primary fw-600 w-100">
+                <i class="bi bi-list-ul me-1"></i>View Profiles
+              </a>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="module-card">
+              <div class="module-card-icon mc-orange"><i class="bi bi-calendar2-heart text-white"></i></div>
+              <h5>Vaccination Scheduler</h5>
+              <p>Schedule vaccinations & log treatments with a full FullCalendar view, overdue alerts, and Mark Done workflow.</p>
+              <div class="mb-3">
+                <span class="module-pill" style="background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.2)">
+                  <i class="bi bi-syringe"></i> {{ db.pending_vax }} Pending
+                </span>
+                {% if db.overdue_vax > 0 %}
+                <span class="module-pill ms-1" style="background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.2)">
+                  <i class="bi bi-exclamation-triangle"></i> {{ db.overdue_vax }} Overdue
+                </span>
+                {% endif %}
+              </div>
+              <a href="{{ url_for('scheduler') }}" class="btn btn-sm btn-outline-warning fw-600 w-100">
+                <i class="bi bi-calendar3 me-1"></i>Open Scheduler
+              </a>
+            </div>
+          </div>
         </div>
+
+        <!-- ML Performance -->
+        <div class="dash-section-label"><i class="bi bi-bar-chart me-2"></i>ML Model Performance</div>
+        <div class="trk-card mb-4">
+          <div class="row g-3 align-items-center">
+            <div class="col-md-5">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#22d3ee,#6366f1);display:flex;align-items:center;justify-content:center;font-size:1.4rem">🏆</div>
+                <div>
+                  <div class="text-muted small">Best Algorithm</div>
+                  <div class="fw-700 text-white" style="font-size:1rem">{{ stats.model_name }}</div>
+                </div>
+              </div>
+              <div class="ml-bar-wrap">
+                {% for label, val, col in [
+                  ('Accuracy',  stats.accuracy,  '#22d3ee'),
+                  ('Precision', stats.precision, '#4ade80'),
+                  ('Recall',    stats.recall,    '#fb923c'),
+                  ('F1 Score',  stats.f1,        '#a78bfa'),
+                ] %}
+                <div class="ml-bar-row">
+                  <span class="ml-bar-label">{{ label }}</span>
+                  <div class="ml-bar-track">
+                    <div class="ml-bar-fill" style="width:0%;background:{{ col }}" data-width="{{ val }}"></div>
+                  </div>
+                  <span style="color:{{ col }};font-weight:700;min-width:42px;text-align:right">{{ val }}%</span>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="col-md-7">
+              <div class="table-responsive">
+                <table class="table trk-table mb-0" style="font-size:.78rem">
+                  <thead><tr><th>Algorithm</th><th>Accuracy</th><th>F1</th><th></th></tr></thead>
+                  <tbody>
+                  {% for name, m in stats.all_results.items() %}
+                  <tr>
+                    <td class="text-white fw-600">{{ name }}</td>
+                    <td class="text-white">{{ m.accuracy }}%</td>
+                    <td class="text-muted">{{ m.f1 }}%</td>
+                    <td>
+                      {% if name == stats.model_name %}
+                      <span class="badge bg-success">✓ Best</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Confusion Matrix + Feature Importance -->
+        <div class="row g-3">
+          <div class="col-md-5">
+            <div class="trk-card h-100">
+              <div class="trk-card-header mb-2">
+                <span style="font-size:.82rem"><i class="bi bi-grid me-1 text-accent"></i>Confusion Matrix</span>
+              </div>
+              <img src="{{ url_for('static', filename='images/confusion_matrix.png') }}"
+                   alt="Confusion Matrix" class="img-fluid rounded" style="width:100%">
+            </div>
+          </div>
+          <div class="col-md-7">
+            <div class="trk-card h-100">
+              <div class="trk-card-header mb-2">
+                <span style="font-size:.82rem"><i class="bi bi-diagram-3 me-1 text-accent"></i>Feature Importance</span>
+              </div>
+              <img src="{{ url_for('static', filename='images/feature_importance.png') }}"
+                   alt="Feature Importance" class="img-fluid rounded" style="width:100%;max-height:210px;object-fit:contain">
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── Right: Activity + Upcoming ── -->
+      <div class="col-lg-4">
+
+        <!-- Recent Health Checks -->
+        <div class="dash-section-label"><i class="bi bi-clock-history me-2"></i>Recent Health Checks</div>
+        <div class="trk-card mb-4">
+          {% if recent_health %}
+          {% for r in recent_health %}
+          <div class="activity-item">
+            <div class="activity-dot" style="background:{{ '#4ade80' if r.prediction=='Healthy' else '#f87171' }}"></div>
+            <div class="activity-text">
+              <strong>{{ r.animal_name }}</strong>
+              <span class="ms-1" style="color:{{ '#4ade80' if r.prediction=='Healthy' else '#f87171' }}">{{ r.prediction }}</span>
+              <br><span style="font-size:.72rem">{{ r.confidence }}% confidence</span>
+            </div>
+            <span class="activity-time">{{ r.recorded_at[5:10] }}</span>
+          </div>
+          {% endfor %}
+          <a href="{{ url_for('predict') }}" class="btn btn-sm btn-outline-info w-100 mt-3 fw-600">
+            <i class="bi bi-plus-circle me-1"></i>New Health Check
+          </a>
+          {% else %}
+          <div class="text-center text-muted py-4">
+            <i class="bi bi-clipboard2-pulse d-block mb-2" style="font-size:2rem;opacity:.3"></i>
+            <span style="font-size:.83rem">No health checks yet.</span><br>
+            <a href="{{ url_for('predict') }}" class="text-accent" style="font-size:.82rem">Run first prediction →</a>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Upcoming Vaccinations -->
+        <div class="dash-section-label"><i class="bi bi-syringe me-2"></i>Upcoming Vaccinations</div>
+        <div class="trk-card mb-4">
+          {% if upcoming_vax %}
+          {% for v in upcoming_vax %}
+          <div class="vax-item">
+            <span class="vax-date {{ 'vax-overdue' if v.status=='Overdue' else '' }}">
+              {{ v.scheduled_date[5:] }}
+              {% if v.status == 'Overdue' %}<br><span style="font-size:.65rem">OVERDUE</span>{% endif %}
+            </span>
+            <div class="flex-grow-1 min-w-0">
+              <div class="text-white fw-600" style="font-size:.82rem">{{ v.vaccine_name }}</div>
+              <div class="text-muted" style="font-size:.74rem">{{ v.animal_name }}</div>
+            </div>
+          </div>
+          {% endfor %}
+          <a href="{{ url_for('scheduler') }}" class="btn btn-sm btn-outline-success w-100 mt-3 fw-600">
+            <i class="bi bi-calendar3 me-1"></i>View Full Schedule
+          </a>
+          {% else %}
+          <div class="text-center text-muted py-4">
+            <i class="bi bi-calendar-check d-block mb-2" style="font-size:2rem;opacity:.3"></i>
+            <span style="font-size:.83rem">No upcoming vaccinations.</span><br>
+            <a href="{{ url_for('scheduler') }}" class="text-accent" style="font-size:.82rem">Schedule now →</a>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="dash-section-label"><i class="bi bi-lightning me-2"></i>Quick Actions</div>
+        <div class="d-grid gap-2">
+          <a href="{{ url_for('animal_new') }}" class="btn btn-outline-info text-start fw-600" style="font-size:.85rem">
+            <i class="bi bi-plus-circle me-2"></i>Register New Animal
+          </a>
+          <a href="{{ url_for('scheduler') }}" class="btn btn-outline-success text-start fw-600" style="font-size:.85rem">
+            <i class="bi bi-syringe me-2"></i>Schedule Vaccination
+          </a>
+          <a href="{{ url_for('tracking') }}" class="btn btn-outline-warning text-start fw-600" style="font-size:.85rem">
+            <i class="bi bi-camera-video me-2"></i>Start Live Tracking
+          </a>
+          <a href="{{ url_for('predict') }}" class="btn btn-outline-primary text-start fw-600" style="font-size:.85rem">
+            <i class="bi bi-lightning-fill me-2"></i>Run Health Prediction
+          </a>
+        </div>
+
       </div>
     </div>
-  </div>
-</section>
 
-<!-- ═══════════════════════════════════════════
-     CTA SECTION
-════════════════════════════════════════════ -->
-<section class="cta-section py-5">
-  <div class="container-xl">
-    <div class="cta-card text-center py-5 px-4">
-      <div class="cta-icon mb-3"><i class="bi bi-lightning-charge-fill"></i></div>
-      <h2 class="cta-title mb-3">Ready to Assess Your Livestock?</h2>
-      <p class="cta-sub mb-4">
-        Enter your animal's health parameters and get an instant AI-powered health prediction<br/>
-        along with personalized care recommendations.
-      </p>
-      <a href="{{ url_for('predict') }}" class="btn btn-cta-main me-3">
-        <i class="bi bi-cpu me-2"></i>Start Health Prediction
-      </a>
-      <a href="{{ url_for('about') }}" class="btn btn-cta-outline">
-        <i class="bi bi-info-circle me-2"></i>Learn More
-      </a>
+    <!-- ── CTA Banner ── -->
+    <div class="cta-banner mt-5">
+      <div class="cta-icon mb-3" style="font-size:2.5rem">🐄</div>
+      <h3>Complete Dairy Farm Intelligence Platform</h3>
+      <p>Health prediction · Live AI tracking · Animal profiles · Vaccination scheduling</p>
+      <div class="d-flex flex-wrap justify-content-center gap-3">
+        <a href="{{ url_for('predict') }}" class="btn btn-hero-primary">
+          <i class="bi bi-lightning-fill me-2"></i>Start Health Prediction
+        </a>
+        <a href="{{ url_for('animals_list') }}" class="btn btn-hero-outline">
+          <i class="bi bi-journal-medical me-2"></i>Manage Animals
+        </a>
+        <a href="{{ url_for('scheduler') }}" class="btn btn-hero-outline">
+          <i class="bi bi-calendar2-heart me-2"></i>Open Scheduler
+        </a>
+      </div>
     </div>
+
   </div>
 </section>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+window.addEventListener('load', () => {
+  // Animate ML bars
+  document.querySelectorAll('.ml-bar-fill').forEach(el => {
+    setTimeout(() => { el.style.width = el.dataset.width + '%'; }, 400);
+  });
+});
+</script>
 {% endblock %}

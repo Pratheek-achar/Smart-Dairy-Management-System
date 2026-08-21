@@ -250,7 +250,30 @@ def home():
             for k, v in ALL_RESULTS.items()
         }
     }
-    return render_template('home.html', stats=model_stats)
+    # Live database counts
+    db_counts   = db.get_dashboard_counts()
+    # Recent health records (last 5)
+    import sqlite3 as _sq
+    _conn = _sq.connect(db.DB_PATH); _conn.row_factory = _sq.Row
+    recent_health = [dict(r) for r in _conn.execute("""
+        SELECT hr.recorded_at, hr.prediction, hr.confidence, a.name as animal_name
+        FROM health_records hr JOIN animals a ON hr.animal_uid=a.uid
+        ORDER BY hr.recorded_at DESC LIMIT 5
+    """).fetchall()]
+    upcoming_vax = [dict(r) for r in _conn.execute("""
+        SELECT vs.vaccine_name, vs.scheduled_date, vs.status, a.name as animal_name
+        FROM vaccination_schedules vs JOIN animals a ON vs.animal_uid=a.uid
+        WHERE vs.status IN ('Pending','Overdue')
+        ORDER BY vs.scheduled_date ASC LIMIT 5
+    """).fetchall()]
+    _conn.close()
+
+    return render_template('home.html',
+                           stats=model_stats,
+                           db=db_counts,
+                           recent_health=recent_health,
+                           upcoming_vax=upcoming_vax)
+
 
 
 @app.route('/predict', methods=['GET', 'POST'])
@@ -468,11 +491,15 @@ def animal_profile(uid):
     stats          = db.get_animal_stats(uid)
     health_records = db.get_health_records(uid, limit=20)
     behaviour_logs = db.get_behaviour_logs(uid, limit=20)
+    vaccinations   = db.get_vaccinations(animal_uid=uid)
+    treatments     = db.get_treatments(animal_uid=uid)
     return render_template('animal_profile.html',
                            animal=animal,
                            stats=stats,
                            health_records=health_records,
-                           behaviour_logs=behaviour_logs)
+                           behaviour_logs=behaviour_logs,
+                           vaccinations=vaccinations,
+                           treatments=treatments)
 
 
 @app.route('/animals/<uid>/edit', methods=['GET', 'POST'])
@@ -541,8 +568,96 @@ def api_animals():
     return jsonify([{'uid': a['uid'], 'name': a['name'], 'breed': a['breed']} for a in animals])
 
 
+# ═════════════════════════════════════════════════════════════════
+# MODULE 5 — VACCINATION & TREATMENT SCHEDULER
+# ═════════════════════════════════════════════════════════════════
+
+@app.route('/scheduler')
+def scheduler():
+    """Main scheduler page — calendar + list views."""
+    vaccinations = db.get_vaccinations()
+    treatments   = db.get_treatments()
+    animals      = db.get_all_animals(status_filter='Active')
+    cal_events   = db.get_calendar_events()
+
+    stats = {
+        'total_vax':        len(vaccinations),
+        'pending_vax':      sum(1 for v in vaccinations if v['status'] == 'Pending'),
+        'overdue_vax':      sum(1 for v in vaccinations if v['status'] == 'Overdue'),
+        'active_treatments': sum(1 for t in treatments if t['status'] == 'Active'),
+    }
+    return render_template('scheduler.html',
+                           vaccinations=vaccinations,
+                           treatments=treatments,
+                           animals=animals,
+                           calendar_events=cal_events,
+                           stats=stats)
+
+
+# ── Vaccination CRUD ──────────────────────────────────────────────
+
+@app.route('/scheduler/vax/add', methods=['POST'])
+def vax_add():
+    """Add a new vaccination schedule."""
+    uid = request.form.get('animal_uid')
+    if uid:
+        db.add_vaccination(uid, request.form.to_dict())
+    return redirect(url_for('scheduler') + '#tabVax')
+
+
+@app.route('/scheduler/vax/<int:vax_id>/edit', methods=['POST'])
+def vax_edit(vax_id):
+    """Edit an existing vaccination."""
+    db.update_vaccination(vax_id, request.form.to_dict())
+    return redirect(url_for('scheduler') + '#tabVax')
+
+
+@app.route('/scheduler/vax/<int:vax_id>/done', methods=['POST'])
+def vax_done(vax_id):
+    """Mark a vaccination as completed."""
+    db.mark_vaccination_done(
+        vax_id,
+        request.form.get('administered_date', ''),
+        request.form.get('administered_by', '')
+    )
+    return redirect(url_for('scheduler') + '#tabVax')
+
+
+@app.route('/scheduler/vax/<int:vax_id>/delete', methods=['POST'])
+def vax_delete(vax_id):
+    """Delete a vaccination record."""
+    db.delete_vaccination(vax_id)
+    return redirect(url_for('scheduler') + '#tabVax')
+
+
+# ── Treatment CRUD ────────────────────────────────────────────────
+
+@app.route('/scheduler/treatment/add', methods=['POST'])
+def treatment_add():
+    """Add a new treatment log."""
+    uid = request.form.get('animal_uid')
+    if uid:
+        db.add_treatment(uid, request.form.to_dict())
+    return redirect(url_for('scheduler') + '#tabTreat')
+
+
+@app.route('/scheduler/treatment/<int:treat_id>/edit', methods=['POST'])
+def treatment_edit(treat_id):
+    """Edit an existing treatment."""
+    db.update_treatment(treat_id, request.form.to_dict())
+    return redirect(url_for('scheduler') + '#tabTreat')
+
+
+@app.route('/scheduler/treatment/<int:treat_id>/delete', methods=['POST'])
+def treatment_delete(treat_id):
+    """Delete a treatment record."""
+    db.delete_treatment(treat_id)
+    return redirect(url_for('scheduler') + '#tabTreat')
+
+
 # ─────────────────────────────────────────────
 # Entry Point
 # ─────────────────────────────────────────────
 if __name__ == '__main__':
     app.run(debug=False, host='0.0.0.0', port=5000, threaded=True)
+

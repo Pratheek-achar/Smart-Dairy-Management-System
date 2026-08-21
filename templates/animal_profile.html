@@ -208,6 +208,74 @@
 
       </div>
     </div>
+
+    <!-- ── Vaccinations & Treatments for this animal ── -->
+    <div class="row g-4 mt-1">
+      <div class="col-lg-6">
+        <div class="trk-card">
+          <div class="trk-card-header mb-3">
+            <span><i class="bi bi-syringe me-2 text-success"></i>Vaccinations</span>
+            <a href="{{ url_for('scheduler') }}" class="btn btn-xs btn-outline-success">+ Add</a>
+          </div>
+          {% if vaccinations %}
+          <div class="table-responsive">
+            <table class="table trk-table mb-0">
+              <thead><tr><th>Vaccine</th><th>Due Date</th><th>Status</th></tr></thead>
+              <tbody>
+              {% for v in vaccinations %}
+              {% set scol = {'Pending':'#4ade80','Overdue':'#f87171','Completed':'#64748b','Skipped':'#fb923c'}[v.status] if v.status in ['Pending','Overdue','Completed','Skipped'] else '#94a3b8' %}
+              <tr>
+                <td class="text-white fw-600">{{ v.vaccine_name }}<br><small class="text-muted fw-400">Dose #{{ v.dose_number }}</small></td>
+                <td class="text-white" style="font-size:.8rem">{{ v.scheduled_date }}</td>
+                <td><span class="beh-badge" style="background:{{ scol }}20;color:{{ scol }};border:1px solid {{ scol }}40">{{ v.status }}</span></td>
+              </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center text-muted py-3" style="font-size:.85rem">
+            <i class="bi bi-syringe d-block mb-1" style="font-size:1.6rem;opacity:.3"></i>
+            No vaccinations scheduled.
+            <a href="{{ url_for('scheduler') }}" class="d-block mt-1 text-accent">Schedule now →</a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="trk-card">
+          <div class="trk-card-header mb-3">
+            <span><i class="bi bi-capsule me-2 text-info"></i>Treatments</span>
+            <a href="{{ url_for('scheduler') }}" class="btn btn-xs btn-outline-info">+ Add</a>
+          </div>
+          {% if treatments %}
+          <div class="table-responsive">
+            <table class="table trk-table mb-0">
+              <thead><tr><th>Type</th><th>Medicine</th><th>Date</th><th>Status</th></tr></thead>
+              <tbody>
+              {% for t in treatments %}
+              {% set tcol = {'Active':'#93c5fd','Completed':'#64748b','Cancelled':'#6b7280'}[t.status] if t.status in ['Active','Completed','Cancelled'] else '#94a3b8' %}
+              <tr>
+                <td class="text-white" style="font-size:.8rem">{{ t.treatment_type }}</td>
+                <td class="text-muted" style="font-size:.78rem">{{ t.medicine_name or '—' }}</td>
+                <td class="text-muted" style="font-size:.78rem">{{ t.start_date }}</td>
+                <td><span class="beh-badge" style="background:{{ tcol }}20;color:{{ tcol }};border:1px solid {{ tcol }}40">{{ t.status }}</span></td>
+              </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center text-muted py-3" style="font-size:.85rem">
+            <i class="bi bi-capsule d-block mb-1" style="font-size:1.6rem;opacity:.3"></i>
+            No treatments logged.
+            <a href="{{ url_for('scheduler') }}" class="d-block mt-1 text-accent">Log treatment →</a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
   </div>
 </section>
 {% endblock %}

@@ -1,0 +1,574 @@
+{% extends "base.html" %}
+{% block title %}Vaccination & Treatment Scheduler – Smart Dairy{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css">
+<style>
+input,select,textarea{color:#e2e8f0!important;background-color:#0d1b2e!important;color-scheme:dark!important}
+input::placeholder,textarea::placeholder{color:#475569!important}
+select option{background:#0d1b2e!important;color:#e2e8f0!important}
+.form-label{color:#cbd5e1!important;font-size:.83rem!important;font-weight:600!important}
+
+/* ── FullCalendar skin ── */
+.fc{color:#e2e8f0;font-family:'Inter',sans-serif}
+.fc-theme-standard td,.fc-theme-standard th,.fc-theme-standard .fc-scrollgrid{border-color:#1e3a5f!important}
+.fc .fc-toolbar-title{font-size:1.1rem;font-weight:700;color:#e2e8f0}
+.fc .fc-button-primary{background:#0d2040!important;border-color:#1e3a5f!important;color:#94a3b8!important;font-size:.8rem!important}
+.fc .fc-button-primary:hover{background:#1e3a5f!important;color:#fff!important}
+.fc .fc-button-primary.fc-button-active{background:var(--accent)!important;border-color:var(--accent)!important;color:#000!important}
+.fc-day-today{background:rgba(34,211,238,.05)!important}
+.fc-daygrid-day-number,.fc-col-header-cell-cushion{color:#94a3b8!important;text-decoration:none!important}
+.fc-event{border-radius:5px!important;font-size:.72rem!important;padding:2px 5px!important;border:none!important;font-weight:600}
+.fc-popover{background:#0d1b2e!important;border:1px solid #1e3a5f!important}
+.fc-popover-title{color:#e2e8f0!important}
+
+/* ── Scheduler cards ── */
+.sched-card{background:#0b1626;border:1px solid #1e3a5f;border-radius:12px;padding:18px 20px;position:relative;transition:.2s}
+.sched-card:hover{border-color:#22d3ee40;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.sched-status-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:50px;font-size:.7rem;font-weight:700;text-transform:uppercase}
+.pill-pending  {background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3)}
+.pill-overdue  {background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3)}
+.pill-completed{background:rgba(100,116,139,.2);color:#94a3b8;border:1px solid rgba(100,116,139,.3)}
+.pill-skipped  {background:rgba(249,115,22,.15);color:#fb923c;border:1px solid rgba(249,115,22,.3)}
+.pill-active   {background:rgba(96,165,250,.15);color:#93c5fd;border:1px solid rgba(96,165,250,.3)}
+.pill-cancelled{background:rgba(107,114,128,.15);color:#9ca3af;border:1px solid rgba(107,114,128,.3)}
+
+.sched-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
+.icon-vax  {background:rgba(34,197,94,.15)}
+.icon-treat{background:rgba(96,165,250,.15)}
+
+/* tab pills */
+.sched-tabs .nav-link{background:transparent;color:#64748b;border:1px solid transparent;border-radius:8px;font-size:.85rem;font-weight:600;padding:6px 16px}
+.sched-tabs .nav-link.active{background:#0d2040;color:#22d3ee;border-color:#1e3a5f}
+.sched-tabs .nav-link:hover{color:#94a3b8}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header" style="background:linear-gradient(135deg,#0d1a0a,#1a2d0f)">
+  <div class="container-xl">
+    <nav aria-label="breadcrumb"><ol class="breadcrumb mb-2">
+      <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Dashboard</a></li>
+      <li class="breadcrumb-item active">Scheduler</li>
+    </ol></nav>
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+      <div>
+        <h1 class="page-title mb-1"><i class="bi bi-calendar2-heart me-2"></i>Vaccination &amp; Treatment Scheduler</h1>
+        <p class="page-subtitle">Track vaccinations · log treatments · never miss a due date</p>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-success fw-600" data-bs-toggle="modal" data-bs-target="#vaxModal">
+          <i class="bi bi-plus-circle me-2"></i>Add Vaccination
+        </button>
+        <button class="btn btn-outline-info fw-600" data-bs-toggle="modal" data-bs-target="#treatModal">
+          <i class="bi bi-capsule me-2"></i>Add Treatment
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="py-4" style="background:#060e1c;min-height:85vh">
+  <div class="container-xl">
+
+    <!-- ── Stat row ── -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="trk-stat-card trk-green">
+          <i class="bi bi-syringe"></i>
+          <div class="trk-stat-val">{{ stats.total_vax }}</div>
+          <div class="trk-stat-label">Total Vaccinations</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="trk-stat-card trk-yellow">
+          <i class="bi bi-clock-history"></i>
+          <div class="trk-stat-val">{{ stats.pending_vax }}</div>
+          <div class="trk-stat-label">Upcoming</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="trk-stat-card trk-red">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <div class="trk-stat-val">{{ stats.overdue_vax }}</div>
+          <div class="trk-stat-label">Overdue</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="trk-stat-card trk-blue">
+          <i class="bi bi-capsule"></i>
+          <div class="trk-stat-val">{{ stats.active_treatments }}</div>
+          <div class="trk-stat-label">Active Treatments</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Calendar ── -->
+    <div class="trk-card mb-4">
+      <div class="trk-card-header mb-3">
+        <span><i class="bi bi-calendar3 me-2 text-accent"></i>Calendar View</span>
+        <div class="d-flex gap-2 flex-wrap">
+          <span style="font-size:.72rem"><span style="color:#22c55e">●</span> Pending</span>
+          <span style="font-size:.72rem"><span style="color:#ef4444">●</span> Overdue</span>
+          <span style="font-size:.72rem"><span style="color:#64748b">●</span> Completed</span>
+          <span style="font-size:.72rem"><span style="color:#60a5fa">●</span> Treatment</span>
+        </div>
+      </div>
+      <div id="calendar"></div>
+    </div>
+
+    <!-- ── List tabs ── -->
+    <ul class="nav sched-tabs mb-3" id="schedTab">
+      <li class="nav-item">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabVax">
+          <i class="bi bi-syringe me-1"></i>Vaccinations
+          <span class="badge bg-success ms-1">{{ vaccinations|length }}</span>
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabTreat">
+          <i class="bi bi-capsule me-1"></i>Treatments
+          <span class="badge bg-info ms-1">{{ treatments|length }}</span>
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+      <!-- Vaccinations tab -->
+      <div class="tab-pane fade show active" id="tabVax">
+        {% if vaccinations %}
+        <div class="row g-3">
+          {% for v in vaccinations %}
+          <div class="col-md-6 col-lg-4">
+            <div class="sched-card">
+              <div class="d-flex align-items-start gap-3">
+                <div class="sched-icon icon-vax">💉</div>
+                <div class="flex-grow-1 min-w-0">
+                  <div class="d-flex align-items-center justify-content-between mb-1 flex-wrap gap-1">
+                    <span class="fw-700 text-white" style="font-size:.92rem">{{ v.vaccine_name }}</span>
+                    <span class="sched-status-pill pill-{{ v.status|lower }}">{{ v.status }}</span>
+                  </div>
+                  <div class="text-accent small fw-600 mb-1">
+                    <a href="{{ url_for('animal_profile', uid=v.animal_uid) }}" class="text-accent text-decoration-none">
+                      <i class="bi bi-tag me-1"></i>{{ v.animal_name }}
+                    </a>
+                  </div>
+                  <div class="text-muted" style="font-size:.78rem">
+                    <i class="bi bi-calendar-event me-1"></i>Due: <strong class="text-white">{{ v.scheduled_date }}</strong>
+                    &nbsp;·&nbsp; Dose #{{ v.dose_number }}
+                  </div>
+                  {% if v.next_due_date %}
+                  <div class="text-muted mt-1" style="font-size:.76rem">
+                    <i class="bi bi-arrow-repeat me-1"></i>Next due: {{ v.next_due_date }}
+                  </div>
+                  {% endif %}
+                  {% if v.administered_by %}
+                  <div class="text-muted mt-1" style="font-size:.76rem">
+                    <i class="bi bi-person-badge me-1"></i>By: {{ v.administered_by }}
+                  </div>
+                  {% endif %}
+                  {% if v.notes %}
+                  <div class="text-muted mt-1" style="font-size:.75rem;font-style:italic">{{ v.notes }}</div>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="d-flex gap-2 mt-3 pt-2" style="border-top:1px solid #1e3a5f">
+                {% if v.status in ['Pending','Overdue'] %}
+                <button class="btn btn-xs btn-success flex-grow-1"
+                        onclick="markDone({{ v.id }}, '{{ v.vaccine_name }}')">
+                  <i class="bi bi-check2-circle me-1"></i>Mark Done
+                </button>
+                {% endif %}
+                <button class="btn btn-xs btn-outline-secondary"
+                        onclick="editVax({{ v | tojson | e }})">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <form method="POST" action="{{ url_for('vax_delete', vax_id=v.id) }}" style="margin:0">
+                  <button type="submit" class="btn btn-xs btn-outline-danger"
+                          onclick="return confirm('Delete this vaccination?')">
+                    <i class="bi bi-trash3"></i>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <i class="bi bi-syringe d-block"></i>
+          <h5>No vaccinations scheduled</h5>
+          <p class="text-muted">Click "Add Vaccination" to schedule the first one.</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Treatments tab -->
+      <div class="tab-pane fade" id="tabTreat">
+        {% if treatments %}
+        <div class="row g-3">
+          {% for t in treatments %}
+          <div class="col-md-6 col-lg-4">
+            <div class="sched-card">
+              <div class="d-flex align-items-start gap-3">
+                <div class="sched-icon icon-treat">💊</div>
+                <div class="flex-grow-1 min-w-0">
+                  <div class="d-flex align-items-center justify-content-between mb-1 flex-wrap gap-1">
+                    <span class="fw-700 text-white" style="font-size:.92rem">{{ t.treatment_type }}</span>
+                    <span class="sched-status-pill pill-{{ t.status|lower }}">{{ t.status }}</span>
+                  </div>
+                  <div class="text-accent small fw-600 mb-1">
+                    <a href="{{ url_for('animal_profile', uid=t.animal_uid) }}" class="text-accent text-decoration-none">
+                      <i class="bi bi-tag me-1"></i>{{ t.animal_name }}
+                    </a>
+                  </div>
+                  {% if t.medicine_name %}
+                  <div class="text-white" style="font-size:.82rem">
+                    <i class="bi bi-capsule me-1 text-info"></i>{{ t.medicine_name }}
+                    {% if t.dosage %}<span class="text-muted ms-1">({{ t.dosage }})</span>{% endif %}
+                  </div>
+                  {% endif %}
+                  <div class="text-muted mt-1" style="font-size:.78rem">
+                    <i class="bi bi-calendar-event me-1"></i>Start: <strong class="text-white">{{ t.start_date }}</strong>
+                    {% if t.end_date %}&nbsp;→ End: {{ t.end_date }}{% endif %}
+                  </div>
+                  {% if t.vet_name %}
+                  <div class="text-muted mt-1" style="font-size:.76rem">
+                    <i class="bi bi-person-badge me-1"></i>Vet: {{ t.vet_name }}
+                  </div>
+                  {% endif %}
+                  {% if t.cost %}
+                  <div class="text-muted mt-1" style="font-size:.76rem">
+                    <i class="bi bi-currency-rupee me-1"></i>Cost: ₹{{ '%.2f'|format(t.cost) }}
+                  </div>
+                  {% endif %}
+                  {% if t.notes %}
+                  <div class="text-muted mt-1" style="font-size:.75rem;font-style:italic">{{ t.notes }}</div>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="d-flex gap-2 mt-3 pt-2" style="border-top:1px solid #1e3a5f">
+                <button class="btn btn-xs btn-outline-secondary flex-grow-1"
+                        onclick="editTreat({{ t | tojson | e }})">
+                  <i class="bi bi-pencil me-1"></i>Edit
+                </button>
+                <form method="POST" action="{{ url_for('treatment_delete', treat_id=t.id) }}" style="margin:0">
+                  <button type="submit" class="btn btn-xs btn-outline-danger"
+                          onclick="return confirm('Delete this treatment?')">
+                    <i class="bi bi-trash3"></i>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <i class="bi bi-capsule d-block"></i>
+          <h5>No treatments logged</h5>
+          <p class="text-muted">Click "Add Treatment" to log the first one.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════ Add Vaccination Modal ════ -->
+<div class="modal fade" id="vaxModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content" style="background:#0d1b2e;border:1px solid #1e3a5f">
+      <div class="modal-header border-0">
+        <h5 class="modal-title text-white"><i class="bi bi-syringe me-2 text-success"></i><span id="vaxModalTitle">Schedule Vaccination</span></h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="vaxForm" method="POST" action="{{ url_for('vax_add') }}">
+        <input type="hidden" name="vax_id" id="vaxId">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Animal <span class="text-danger">*</span></label>
+              <select name="animal_uid" id="vaxAnimal" class="form-select custom-input" required>
+                <option value="">Select animal…</option>
+                {% for a in animals %}
+                <option value="{{ a.uid }}">{{ a.name }} ({{ a.uid }})</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Vaccine Name <span class="text-danger">*</span></label>
+              <input type="text" name="vaccine_name" id="vaxName" class="form-control custom-input"
+                     placeholder="e.g. FMD, BQ, HS, Brucellosis" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Scheduled Date <span class="text-danger">*</span></label>
+              <input type="date" name="scheduled_date" id="vaxDate" class="form-control custom-input" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Dose Number</label>
+              <input type="number" name="dose_number" id="vaxDose" class="form-control custom-input"
+                     value="1" min="1" max="10">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Next Due Date</label>
+              <input type="date" name="next_due_date" id="vaxNextDate" class="form-control custom-input">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Administered By</label>
+              <input type="text" name="administered_by" id="vaxBy" class="form-control custom-input"
+                     placeholder="Vet name / staff">
+            </div>
+            <div class="col-md-6" id="vaxStatusWrap" style="display:none">
+              <label class="form-label">Status</label>
+              <select name="status" id="vaxStatus" class="form-select custom-input">
+                <option value="Pending">Pending</option>
+                <option value="Completed">Completed</option>
+                <option value="Overdue">Overdue</option>
+                <option value="Skipped">Skipped</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Notes</label>
+              <textarea name="notes" id="vaxNotes" class="form-control custom-input" rows="2"
+                        placeholder="Batch number, side effects, observations…"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success px-4 fw-600">
+            <i class="bi bi-check2-circle me-2"></i>Save
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Add Treatment Modal ════ -->
+<div class="modal fade" id="treatModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content" style="background:#0d1b2e;border:1px solid #1e3a5f">
+      <div class="modal-header border-0">
+        <h5 class="modal-title text-white"><i class="bi bi-capsule me-2 text-info"></i><span id="treatModalTitle">Log Treatment</span></h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="treatForm" method="POST" action="{{ url_for('treatment_add') }}">
+        <input type="hidden" name="treat_id" id="treatId">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Animal <span class="text-danger">*</span></label>
+              <select name="animal_uid" id="treatAnimal" class="form-select custom-input" required>
+                <option value="">Select animal…</option>
+                {% for a in animals %}
+                <option value="{{ a.uid }}">{{ a.name }} ({{ a.uid }})</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Treatment Type <span class="text-danger">*</span></label>
+              <select name="treatment_type" id="treatType" class="form-select custom-input" required>
+                <option value="Medicine">Medicine</option>
+                <option value="Vet Visit">Vet Visit</option>
+                <option value="Surgery">Surgery</option>
+                <option value="Deworming">Deworming</option>
+                <option value="Supplement">Supplement</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Medicine / Procedure Name</label>
+              <input type="text" name="medicine_name" id="treatMed" class="form-control custom-input"
+                     placeholder="e.g. Oxytetracycline, Albendazole">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Dosage</label>
+              <input type="text" name="dosage" id="treatDose" class="form-control custom-input"
+                     placeholder="e.g. 5mg/kg, 10ml twice daily">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Start Date <span class="text-danger">*</span></label>
+              <input type="date" name="start_date" id="treatStart" class="form-control custom-input" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">End Date</label>
+              <input type="date" name="end_date" id="treatEnd" class="form-control custom-input">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Status</label>
+              <select name="status" id="treatStatus" class="form-select custom-input">
+                <option value="Active">Active</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Veterinarian</label>
+              <input type="text" name="vet_name" id="treatVet" class="form-control custom-input"
+                     placeholder="Vet name">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Cost (₹)</label>
+              <input type="number" name="cost" id="treatCost" class="form-control custom-input"
+                     step="0.01" min="0" placeholder="0.00">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Notes</label>
+              <textarea name="notes" id="treatNotes" class="form-control custom-input" rows="2"
+                        placeholder="Diagnosis, response to treatment…"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-info px-4 fw-600 text-dark">
+            <i class="bi bi-check2-circle me-2"></i>Save
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Mark Done Modal ════ -->
+<div class="modal fade" id="doneModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background:#0d1b2e;border:1px solid #1e3a5f">
+      <div class="modal-header border-0">
+        <h5 class="modal-title text-white"><i class="bi bi-check-circle me-2 text-success"></i>Mark Vaccination Done</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" id="doneForm" action="">
+        <div class="modal-body">
+          <p class="text-muted mb-3">Confirm that <strong id="doneVaxName" class="text-white"></strong> has been administered.</p>
+          <div class="mb-3">
+            <label class="form-label">Date Administered</label>
+            <input type="date" name="administered_date" id="doneDate" class="form-control custom-input" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Administered By</label>
+            <input type="text" name="administered_by" class="form-control custom-input" placeholder="Vet / staff name">
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success px-4">Confirm</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Event Detail Popover ════ -->
+<div class="modal fade" id="eventModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content" style="background:#0d1b2e;border:1px solid #1e3a5f">
+      <div class="modal-header border-0 pb-1">
+        <h6 class="modal-title text-white" id="evTitle"></h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body pt-1" id="evBody"></div>
+      <div class="modal-footer border-0 pt-0" id="evFooter"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<script>
+const CALENDAR_EVENTS = {{ calendar_events | tojson }};
+
+// ── FullCalendar init ──────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const cal = new FullCalendar.Calendar(document.getElementById('calendar'), {
+    initialView: 'dayGridMonth',
+    headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,listWeek' },
+    events: CALENDAR_EVENTS,
+    height: 520,
+    eventClick(info) {
+      const p = info.event.extendedProps;
+      document.getElementById('evTitle').textContent = info.event.title;
+      let body = `
+        <div class="text-muted" style="font-size:.82rem">
+          <div class="mb-1"><i class="bi bi-tag me-1"></i><a href="/animals/${p.uid}" class="text-accent">${p.animal}</a></div>
+          <div class="mb-1"><i class="bi bi-circle-fill me-1" style="color:${info.event.backgroundColor}"></i>${p.status}</div>
+          ${p.notes ? `<div class="mt-2 text-muted">${p.notes}</div>` : ''}
+        </div>`;
+      document.getElementById('evBody').innerHTML = body;
+      let footer = '';
+      if (p.type === 'vaccination' && (p.status === 'Pending' || p.status === 'Overdue'))
+        footer = `<button class="btn btn-sm btn-success" onclick="markDone(${p.id},'${info.event.title}');bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide()">Mark Done</button>`;
+      document.getElementById('evFooter').innerHTML = footer;
+      new bootstrap.Modal(document.getElementById('eventModal')).show();
+    }
+  });
+  cal.render();
+
+  // Set today's date as default for date inputs
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('vaxDate').value  = today;
+  document.getElementById('treatStart').value = today;
+  document.getElementById('doneDate').value  = today;
+});
+
+// ── Mark Vaccination Done ─────────────────────────────
+function markDone(id, name) {
+  document.getElementById('doneVaxName').textContent = name;
+  document.getElementById('doneForm').action = `/scheduler/vax/${id}/done`;
+  document.getElementById('doneDate').value  = new Date().toISOString().split('T')[0];
+  new bootstrap.Modal(document.getElementById('doneModal')).show();
+}
+
+// ── Edit Vaccination ──────────────────────────────────
+function editVax(v) {
+  document.getElementById('vaxModalTitle').textContent = 'Edit Vaccination';
+  document.getElementById('vaxForm').action = `/scheduler/vax/${v.id}/edit`;
+  document.getElementById('vaxId').value        = v.id;
+  document.getElementById('vaxAnimal').value    = v.animal_uid;
+  document.getElementById('vaxName').value      = v.vaccine_name;
+  document.getElementById('vaxDate').value      = v.scheduled_date;
+  document.getElementById('vaxDose').value      = v.dose_number;
+  document.getElementById('vaxNextDate').value  = v.next_due_date || '';
+  document.getElementById('vaxBy').value        = v.administered_by || '';
+  document.getElementById('vaxNotes').value     = v.notes || '';
+  document.getElementById('vaxStatus').value    = v.status;
+  document.getElementById('vaxStatusWrap').style.display = 'block';
+  new bootstrap.Modal(document.getElementById('vaxModal')).show();
+}
+
+// ── Edit Treatment ────────────────────────────────────
+function editTreat(t) {
+  document.getElementById('treatModalTitle').textContent = 'Edit Treatment';
+  document.getElementById('treatForm').action = `/scheduler/treatment/${t.id}/edit`;
+  document.getElementById('treatId').value    = t.id;
+  document.getElementById('treatAnimal').value = t.animal_uid;
+  document.getElementById('treatType').value  = t.treatment_type;
+  document.getElementById('treatMed').value   = t.medicine_name || '';
+  document.getElementById('treatDose').value  = t.dosage || '';
+  document.getElementById('treatStart').value = t.start_date;
+  document.getElementById('treatEnd').value   = t.end_date || '';
+  document.getElementById('treatStatus').value = t.status;
+  document.getElementById('treatVet').value   = t.vet_name || '';
+  document.getElementById('treatCost').value  = t.cost || '';
+  document.getElementById('treatNotes').value = t.notes || '';
+  new bootstrap.Modal(document.getElementById('treatModal')).show();
+}
+
+// Reset forms when modals close
+document.getElementById('vaxModal').addEventListener('hidden.bs.modal', () => {
+  document.getElementById('vaxForm').reset();
+  document.getElementById('vaxForm').action = "{{ url_for('vax_add') }}";
+  document.getElementById('vaxModalTitle').textContent = 'Schedule Vaccination';
+  document.getElementById('vaxStatusWrap').style.display = 'none';
+});
+document.getElementById('treatModal').addEventListener('hidden.bs.modal', () => {
+  document.getElementById('treatForm').reset();
+  document.getElementById('treatForm').action = "{{ url_for('treatment_add') }}";
+  document.getElementById('treatModalTitle').textContent = 'Log Treatment';
+});
+</script>
+{% endblock %}
